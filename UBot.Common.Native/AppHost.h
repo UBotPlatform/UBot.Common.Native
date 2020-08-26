@@ -35,6 +35,9 @@ extern "C"
 	UNativeStr __stdcall UNativeStr_WithSuffix(app_GetMemberName)(UNativeStr bot, UNativeStr source, UNativeStr target);
 	UNativeStr __stdcall UNativeStr_WithSuffix(app_GetUserAvatar)(UNativeStr bot, UNativeStr id);
 	UNativeStr __stdcall UNativeStr_WithSuffix(app_GetSelfID)(UNativeStr bot);
+	UNativeStr __stdcall UNativeStr_WithSuffix(app_GetPlatformID)(UNativeStr bot);
+	UNativeStr __stdcall UNativeStr_WithSuffix(app_GetGroupList)(UNativeStr bot);
+	UNativeStr __stdcall UNativeStr_WithSuffix(app_GetMemberList)(UNativeStr bot, UNativeStr id);
 }
 
 typedef UNativeStr_WithSuffix(AppHandler) AppHandler;
@@ -48,3 +51,6 @@ inline auto& app_ShutupAllMember = UNativeStr_WithSuffix(app_ShutupAllMember);
 inline auto& app_GetMemberName = UNativeStr_WithSuffix(app_GetMemberName);
 inline auto& app_GetUserAvatar = UNativeStr_WithSuffix(app_GetUserAvatar);
 inline auto& app_GetSelfID = UNativeStr_WithSuffix(app_GetSelfID);
+inline auto& app_GetPlatformID = UNativeStr_WithSuffix(app_GetPlatformID);
+inline auto& app_GetGroupList = UNativeStr_WithSuffix(app_GetGroupList);
+inline auto& app_GetMemberList = UNativeStr_WithSuffix(app_GetMemberList);

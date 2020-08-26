@@ -55,6 +55,39 @@ inline void WriteEventResultWithReason(ubot::TWriter& writer, EventResultType ty
     ubot::JsonRpc::EndResult(writer);
 }
 
+inline std::string fromStringArray(const rapidjson::Value& a, const char* separator) {
+    std::string r;
+    if (!a.IsArray()) {
+        return r;
+    }
+    auto iter = a.Begin();
+    auto end = a.End();
+    if (iter != end) {
+        if (!iter->IsString())
+        {
+            r.append("<error>");
+        }
+        else
+        {
+            r.append(iter->GetString(), iter->GetStringLength());
+        }
+        iter++;
+    }
+    for (; iter != end; ++iter)
+    {
+        r.append(separator);
+        if (!iter->IsString())
+        {
+            r.append("<error>");
+        }
+        else
+        {
+            r.append(iter->GetString(), iter->GetStringLength());
+        }
+    }
+    return r;
+}
+
 UNativeStr __stdcall UNativeStr_WithSuffix(app_GetGroupName)(UNativeStr bot, UNativeStr id)
 {
     auto rpcResult = appApi->Call("get_group_name", [&](ubot::TWriter& writer)
@@ -176,12 +209,50 @@ UNativeStr __stdcall UNativeStr_WithSuffix(app_GetSelfID)(UNativeStr bot)
     return GetPermanentNativeString(data);
 }
 
+UNativeStr __stdcall UNativeStr_WithSuffix(app_GetPlatformID)(UNativeStr bot)
+{
+    auto rpcResult = appApi->Call("get_platform_id", [&](ubot::TWriter& writer)
+        {
+            writer.StartArray();
+            writer.String(FromNativeString(bot));
+            writer.EndArray();
+        });
+    auto result = rpcResult.Result.IsString() ? rpcResult.Result.GetString() : nullptr;
+    static auto data = ToPermanentNativeString(result);
+    return GetPermanentNativeString(data);
+}
+
+UNativeStr __stdcall UNativeStr_WithSuffix(app_GetGroupList)(UNativeStr bot)
+{
+    auto rpcResult = appApi->Call("get_group_list", [&](ubot::TWriter& writer)
+        {
+            writer.StartArray();
+            writer.String(FromNativeString(bot));
+            writer.EndArray();
+        });
+    static auto data = ToPermanentNativeString(fromStringArray(rpcResult.Result, "|").c_str());
+    return GetPermanentNativeString(data);
+}
+
+UNativeStr __stdcall UNativeStr_WithSuffix(app_GetMemberList)(UNativeStr bot, UNativeStr id)
+{
+    auto rpcResult = appApi->Call("get_member_list", [&](ubot::TWriter& writer)
+        {
+            writer.StartArray();
+            writer.String(FromNativeString(bot));
+            writer.String(FromNativeString(id));
+            writer.EndArray();
+        });
+    static auto data = ToPermanentNativeString(fromStringArray(rpcResult.Result, "|").c_str());
+    return GetPermanentNativeString(data);
+}
+
 void __stdcall UNativeStr_WithSuffix(app_Host)(
     UNativeStr op,
     UNativeStr urlStr,
     UNativeStr id,
     void (*startup)(),
-    const UNativeStr_WithSuffix(AppHandler) *handler)
+    const UNativeStr_WithSuffix(AppHandler)* handler)
 {
 #define MinSize(t,m) offsetof(t, m) + sizeof(((t*)0)->m)
 #define ReadEventHandler(to, from) auto to = \
