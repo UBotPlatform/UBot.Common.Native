@@ -9,13 +9,14 @@
 #ifdef _WIN32
 namespace ubot
 {
+    extern int ActiveCodePage;
 	std::unique_ptr<char[]> ConvertBetweenMBCS(const char* x, int sourceCP, int targetCP);
 }
 #endif
 #if defined(UNativeStr_WindowsAnsi)
-#define FromNativeString(x) ::ubot::ConvertBetweenMBCS(x, 0, 65001).get()
-#define ToNativeString(x) ::ubot::ConvertBetweenMBCS(x, 65001, 0).get()
-#define ToPermanentNativeString(x) ::ubot::ConvertBetweenMBCS(x, 65001, 0)
+#define FromNativeString(x) ::ubot::ConvertBetweenMBCS(x, ::ubot::ActiveCodePage, 65001).get()
+#define ToNativeString(x) ::ubot::ConvertBetweenMBCS(x, 65001, ::ubot::ActiveCodePage).get()
+#define ToPermanentNativeString(x) ::ubot::ConvertBetweenMBCS(x, 65001, ::ubot::ActiveCodePage)
 #define GetPermanentNativeString(x) (x).get()
 #elif defined(UNativeStr_WideString)
 #define FromNativeString(x) std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(x).c_str()

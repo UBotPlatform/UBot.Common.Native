@@ -6,6 +6,18 @@
 #ifdef _WIN32
 namespace ubot
 {
+    int ActiveCodePage = []() -> int 
+    {
+        int acp = GetACP();
+        if (acp == 936) 
+        {
+            if (IsValidCodePage(54936))
+            {
+                acp = 54936;
+            }
+        }
+        return acp;
+    }();
     std::unique_ptr<char[]> ConvertBetweenMBCS(const char* x, int sourceCP, int targetCP)
     {
         if (x == nullptr)
