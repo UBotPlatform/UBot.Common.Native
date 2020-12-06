@@ -1,7 +1,7 @@
-#include "AppHost.h"
-#include "UNativeStrHelper.h"
 #include <skyr/percent_encoding/percent_encode.hpp>
 #include "UBotClientHost.h"
+#include "AppHost.h"
+#include "UNativeStrHelper.h"
 inline ubot::JsonRpc* appApi = nullptr;
 
 inline EventResultType __stdcall DefaultOnReceiveChatMessage(UNativeStr bot, ChatMessageType type, UNativeStr source, UNativeStr sender, UNativeStr message, UNativeStr info)
@@ -283,7 +283,7 @@ void __stdcall UNativeStr_WithSuffix(app_Host)(
                 return "";
             }
             clientUrl.set_pathname("/api/app");
-            clientUrl.set_search("?id=" + skyr::percent_encode<std::string>(FromNativeString(id)) + "&token=" + registered.Result.GetString());
+            clientUrl.set_search("?id=" + skyr::percent_encode(std::string(FromNativeString(id))) + "&token=" + registered.Result.GetString());
             return clientUrl.href();
         },
         [=](ubot::JsonRpc& rpc)

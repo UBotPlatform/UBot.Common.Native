@@ -26,7 +26,7 @@ namespace ubot
                 ix::HttpClient httpClient;
                 auto getTokenArgs = httpClient.createRequest(getTokenUrlStr);
                 auto managerToken = httpClient.post(getTokenUrlStr,
-                    "user=" + skyr::percent_encode<std::string>(user) + "&password=" + skyr::percent_encode<std::string>(password),
+                    "user=" + skyr::percent_encode(user) + "&password=" + skyr::percent_encode(password),
                     getTokenArgs)->payload;
                 if (managerToken.length() == 0)
                 {

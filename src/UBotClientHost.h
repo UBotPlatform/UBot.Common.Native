@@ -1,11 +1,11 @@
 #pragma once
+#include <skyr/url.hpp>
+#include <skyr/percent_encoding/percent_encode.hpp>
 #include <ixwebsocket/IXWebSocket.h>
 #include <ixwebsocket/IXNetSystem.h>
 #include <ixwebsocket/IXHttpClient.h>
 #include <iostream>
 #include <memory>
-#include <skyr/url.hpp>
-#include <skyr/percent_encoding/percent_encode.hpp>
 #include "JsonRpc.h"
 #include <thread>
 #include "third-party/ctpl_stl.h"

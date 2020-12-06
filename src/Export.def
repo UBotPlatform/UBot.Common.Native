@@ -1,4 +1,4 @@
-LIBRARY UBot.Common.Native.dll
+LIBRARY ubot-common
 EXPORTS
 
 app_HostA
