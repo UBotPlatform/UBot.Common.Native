@@ -99,22 +99,21 @@ namespace ubot
     void HostUBotClient(
         const char* op,
         const char* urlStr,
+        ubot::JsonRpc* rpc,
         std::function<std::string(const skyr::url& managerUrl, ubot::JsonRpc& rpc)> registerClient,
-        std::function<void(ubot::JsonRpc& rpc)> configRPC,
         std::function<void()> startup)
     {
         ix::initNetSystem();
         ctpl::thread_pool taskPool(4);
         std::unique_ptr<ix::WebSocket> ws;
-        ubot::JsonRpc rpc;
         auto onMessageCallback = [&](const ix::WebSocketMessagePtr& msg)
         {
             if (msg->type == ix::WebSocketMessageType::Message)
             {
                 auto msgContent = msg->str;
-                taskPool.push([&rpc, msgContent = std::move(msgContent)](int)
+                taskPool.push([rpc, msgContent = std::move(msgContent)](int)
                 {
-                    rpc.FeedData(msgContent);
+                    rpc->FeedData(msgContent);
                 });
             }
         };
@@ -133,15 +132,15 @@ namespace ubot
             std::cout << "Failed to connect to UBot Router after 5 attempts." << std::endl;
             return;
         }
-        rpc.SetSender([&](const std::string& data)
+        rpc->SetSender([&](const std::string& data)
             {
                 ws->sendText(data);
             });
-        configRPC(rpc);
         taskPool.push([startup](int)
             {
                 startup();
             });
         ws->run();
+        rpc->SetSender(nullptr);
     }
 }

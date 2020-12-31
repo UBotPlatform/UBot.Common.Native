@@ -23,7 +23,9 @@ target_sources(ubot-common PRIVATE
     "src/UBotClientHost.h"
     "src/UNativeStrHelper.cpp"
     "src/UNativeStrHelper.h"
-    "src/third-party/ctpl_stl.h")
+    "src/third-party/ctpl_stl.h"
+    "src/UBotAppContext.h"
+    "src/AppHostCommon.cpp")
 if(WIN32)
     target_sources(ubot-common PRIVATE "src/Export.def")
 endif()

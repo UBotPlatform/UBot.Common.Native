@@ -115,9 +115,9 @@ namespace ubot
 		{
 			this->sender = sender;
 		}
-		void Register(const std::string& name, std::function<void(rapidjson::Value&& params, TWriter& writer)> responder)
+		void SetHandler(const std::string& name, std::function<void(rapidjson::Value&& params, TWriter& writer)> handler)
 		{
-			this->responder[name] = responder;
+			this->handler[name] = handler;
 		}
 		JsonRpcResult Call(const std::string &name, std::function<void(TWriter& writer)> paramsBuilder)
 		{
@@ -200,7 +200,7 @@ namespace ubot
 		std::mutex mtx;
 		std::atomic_uint64_t seq = 0;
 		std::unordered_map<uint64_t, ResultBox<rapidjson::Document>*> pending;
-		std::unordered_map<std::string, std::function<void(rapidjson::Value&& params, TWriter& writer)>> responder;
+		std::unordered_map<std::string, std::function<void(rapidjson::Value&& params, TWriter& writer)>> handler;
 		bool ProcessData(rapidjson::Value&& value, TWriter& writer) 
 		{
 			if (!value.IsObject())
@@ -235,8 +235,8 @@ namespace ubot
 					writer.EndObject();
 					return true;
 				}
-				auto pResponder = responder.find(std::string(oMethod->GetString(), oMethod->GetStringLength()));
-				if (pResponder == responder.end())
+				auto phandler = handler.find(std::string(oMethod->GetString(), oMethod->GetStringLength()));
+				if (phandler == handler.end())
 				{
 					if (isNotification)
 					{
@@ -256,7 +256,7 @@ namespace ubot
 					rapidjson::GenericStringBuffer<rapidjson::UTF8<> > tempResult;
 					TWriter tempWriter(tempResult);
 					tempWriter.StartObject();
-					pResponder->second(std::move(pParams->value), tempWriter);
+					phandler->second(std::move(pParams->value), tempWriter);
 					tempWriter.EndObject();
 					return false;
 				}
@@ -267,7 +267,7 @@ namespace ubot
 					writer.String("2.0");
 					writer.Key("id");
 					oId->Accept(writer);
-					pResponder->second(std::move(pParams->value), writer);
+					phandler->second(std::move(pParams->value), writer);
 					writer.EndObject();
 					return true;
 				}

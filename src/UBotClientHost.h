@@ -19,7 +19,7 @@ namespace ubot
     void HostUBotClient(
         const char* op,
         const char* urlStr,
+        ubot::JsonRpc* rpc,
         std::function<std::string(const skyr::url& managerUrl, ubot::JsonRpc& rpc)> registerClient,
-        std::function<void(ubot::JsonRpc& rpc)> configRPC,
         std::function<void()> startup);
 }
