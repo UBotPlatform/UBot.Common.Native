@@ -11,15 +11,38 @@
 #define UNativeStr_UTF8
 #endif
 #endif
+namespace ubot
+{
+#ifdef _WIN32
+    struct WindowsAnsiEncoding {
+        using Char = char;
+        using Str = char*;
+        using ConstStr = const char*;
+    };
+#endif
+    struct UTF8Encoding {
+        using Char = char;
+        using Str = char*;
+        using ConstStr = const char*;
+    };
+    struct WideStringEncoding {
+        using Char = wchar_t;
+        using Str = wchar_t*;
+        using ConstStr = const wchar_t*;
+    };
+#if defined(UNativeStr_WindowsAnsi)
+    using Encoding = WindowsAnsiEncoding;
+#elif defined(UNativeStr_WideString)
+    using Encoding = WideStringEncoding;
+#elif defined(UNativeStr_UTF8)
+    using Encoding = UTF8Encoding;
+#endif
+}
 #if defined(UNativeStr_WindowsAnsi)
 #define UNativeStr_WithSuffix(name) name##A
-typedef char UNativeChar;
 #elif defined(UNativeStr_WideString)
 #define UNativeStr_WithSuffix(name) name##W
-typedef wchar_t UNativeChar;
 #elif defined(UNativeStr_UTF8)
 #define UNativeStr_WithSuffix(name) name##U8
-typedef char UNativeChar;
 #endif
-typedef const UNativeChar* UNativeStr;
 inline const constexpr int UNativeBufferSize = 1024;
