@@ -9,81 +9,130 @@
 namespace ubot
 {
 #ifdef _WIN32
-    extern int ActiveCodePage;
-    std::unique_ptr<char[]> ConvertBetweenMBCS(const char* x, int sourceCP, int targetCP);
-    struct WindowsAnsiEncodingImpl : WindowsAnsiEncoding {
-        static std::unique_ptr<char[]> TempFrom_S(ConstStr x) {
-            return ConvertBetweenMBCS(x, ::ubot::ActiveCodePage, 65001);
-        }
-        static const char* TempFrom_G(const std::unique_ptr<char[]>& x) {
-            return x.get();
-        }
-        static std::unique_ptr<char[]> PermTo_S(ConstStr x) {
-            return ConvertBetweenMBCS(x, ::ubot::ActiveCodePage, 65001);
-        }
-        static const char* PermTo_G(const std::unique_ptr<char[]>& x) {
-            return x.get();
-        }
-        static std::unique_ptr<char[]> TempTo_S(const char* x) {
-            return PermTo_S(x);
-        }
-        static const char* TempTo_G(const std::unique_ptr<char[]>& x) {
-            return PermTo_G(x);
-        }
-    };
+	extern int ActiveCodePage;
+	std::unique_ptr<char[]> ConvertBetweenMBCS(const char* x, int sourceCP, int targetCP);
+	struct WindowsAnsiEncodingImpl : WindowsAnsiEncoding
+	{
+		struct TempFrom
+		{
+		private:
+			std::unique_ptr<char[]> data;
+		public:
+			TempFrom(ConstStr x)
+				: data(ConvertBetweenMBCS(x, ::ubot::ActiveCodePage, 65001))
+			{
+			}
+			const char* get() const noexcept
+			{
+				return this->data.get();
+			}
+		};
+		struct PermTo
+		{
+		private:
+			std::unique_ptr<char[]> data;
+		public:
+			PermTo(const char* x)
+				: data(ConvertBetweenMBCS(x, 65001, ::ubot::ActiveCodePage))
+			{
+			}
+			ConstStr get() const noexcept
+			{
+				return this->data.get();
+			}
+		};
+		using TempTo = PermTo;
+	};
 #endif
-    struct WideStringEncodingImpl : WideStringEncoding {
-        static std::string TempFrom_S(ConstStr x) {
-            return std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(x);
-        }
-        static const char* TempFrom_G(const std::string& x) {
-            return x.c_str();
-        }
-        static std::wstring PermTo_S(const char* x) {
-            return std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(x);
-        }
-        static const wchar_t* PermTo_G(const std::wstring& x) {
-            return x.c_str();
-        }
-        static std::wstring TempTo_S(const char* x) {
-            return PermTo_S(x);
-        }
-        static const wchar_t* TempTo_G(const std::wstring& x) {
-            return PermTo_G(x);
-        }
-    };
-    struct UTF8EncodingImpl : UTF8Encoding {
-        static const char* TempFrom_S(ConstStr x) {
-            return x;
-        }
-        static const char* TempFrom_G(const char* x) {
-            return x;
-        }
-        static std::unique_ptr<char[]> PermTo_S(ConstStr x) {
-            if (x == nullptr)
-            {
-                return nullptr;
-            }
-            auto len = strlen(x);
-            auto result = std::make_unique<char[]>(len + 1);
-            memcpy(result.get(), x, len + 1);
-            return result;
-        }
-        static const char* PermTo_G(const std::unique_ptr<char[]>& x) {
-            return x.get();
-        }
-        static const char* TempTo_S(ConstStr x) {
-            return x;
-        }
-        static const char* TempTo_G(const char* x) {
-            return x;
-        }
-    };
+	struct WideStringEncodingImpl : WideStringEncoding
+	{
+		struct TempFrom
+		{
+		private:
+			std::string data;
+		public:
+			TempFrom(ConstStr x)
+				: data(std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(x))
+			{
+			}
+			const char* get() const noexcept
+			{
+				return this->data.c_str();
+			}
+		};
+		struct PermTo
+		{
+		private:
+			std::wstring data;
+		public:
+			PermTo(const char* x)
+				: data(std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(x))
+			{
+			}
+			ConstStr get() const noexcept
+			{
+				return this->data.c_str();
+			}
+		};
+		using TempTo = PermTo;
+	};
+	struct UTF8EncodingImpl : UTF8Encoding
+	{
+		struct TempFrom
+		{
+		private:
+			const char* data;
+		public:
+			TempFrom(ConstStr x)
+				: data(x)
+			{
+			}
+			const char* get() const noexcept
+			{
+				return data;
+			}
+		};
+		struct PermTo
+		{
+		private:
+			std::unique_ptr<char[]> data;
+		public:
+			PermTo(const char* x)
+			{
+				if (x == nullptr)
+				{
+					data = nullptr;
+					return;
+				}
+				auto len = strlen(x);
+				data = std::make_unique<char[]>(len + 1);
+				memcpy(data.get(), x, len + 1);
+			}
+			ConstStr get() const noexcept
+			{
+				return this->data.get();
+			}
+		};
+		struct TempTo
+		{
+		private:
+			const char* data;
+		public:
+			TempTo(const char* x)
+				: data(x)
+			{
+			}
+			ConstStr get() const noexcept
+			{
+				return data;
+			}
+		};
+	};
 #if defined(UNativeStr_WindowsAnsi)
-    using EncodingImpl = WindowsAnsiEncodingImpl;
+	using EncodingImpl = WindowsAnsiEncodingImpl;
 #elif defined(UNativeStr_WideString)
-    using EncodingImpl = WideStringEncodingImpl;
+	using EncodingImpl = WideStringEncodingImpl;
 #elif defined(UNativeStr_UTF8)
-    using EncodingImpl = UTF8EncodingImpl;
+	using EncodingImpl = UTF8EncodingImpl;
 #endif
 }

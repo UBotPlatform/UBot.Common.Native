@@ -22,7 +22,7 @@ inline void WriteEventResultWithReason(TWriter& writer, EventResultType type, En
     writer.Key("type");
     writer.Int(static_cast<int>(type));
     writer.Key("reason");
-    writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(reason)));
+    writer.String(EncodingImpl::TempFrom(reason).get());
     writer.EndObject();
     JsonRpc::EndResult(writer);
 }
@@ -66,13 +66,13 @@ Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetGroupName)(void* ct
     auto rpcResult = context->rpc.Call("get_group_name", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(id)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
+            writer.String(EncodingImpl::TempFrom(id).get());
             writer.EndArray();
         });
     auto result = rpcResult.Result.IsString() ? rpcResult.Result.GetString() : nullptr;
-    static auto data = EncodingImpl::PermTo_S(result);
-    return EncodingImpl::PermTo_G(data);
+    static auto data = EncodingImpl::PermTo(result);
+    return data.get();
 }
 
 Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetUserName)(void* ctx, Encoding::ConstStr bot, Encoding::ConstStr id)
@@ -81,13 +81,13 @@ Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetUserName)(void* ctx
     auto rpcResult = context->rpc.Call("get_user_name", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(id)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
+            writer.String(EncodingImpl::TempFrom(id).get());
             writer.EndArray();
         });
     auto result = rpcResult.Result.IsString() ? rpcResult.Result.GetString() : nullptr;
-    static auto data = EncodingImpl::PermTo_S(result);
-    return EncodingImpl::PermTo_G(data);
+    static auto data = EncodingImpl::PermTo(result);
+    return data.get();
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSendChatMessage)(void* ctx, Encoding::ConstStr bot, ChatMessageType type, Encoding::ConstStr source, Encoding::ConstStr target, Encoding::ConstStr message)
@@ -96,11 +96,11 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSendChatMessage)(void* ctx, Encoding
     auto rpcResult = context->rpc.Call("send_chat_message", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
             writer.Int(static_cast<int>(type));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(source)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(target)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(message)));
+            writer.String(EncodingImpl::TempFrom(source).get());
+            writer.String(EncodingImpl::TempFrom(target).get());
+            writer.String(EncodingImpl::TempFrom(message).get());
             writer.EndArray();
         });
 }
@@ -111,9 +111,9 @@ void __stdcall UNativeStr_WithSuffix(ubotAppRemoveMember)(void* ctx, Encoding::C
     auto rpcResult = context->rpc.Call("remove_member", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(source)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(target)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
+            writer.String(EncodingImpl::TempFrom(source).get());
+            writer.String(EncodingImpl::TempFrom(target).get());
             writer.EndArray();
         });
 }
@@ -124,9 +124,9 @@ void __stdcall UNativeStr_WithSuffix(ubotAppShutupMember)(void* ctx, Encoding::C
     auto rpcResult = context->rpc.Call("shutup_member", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(source)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(target)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
+            writer.String(EncodingImpl::TempFrom(source).get());
+            writer.String(EncodingImpl::TempFrom(target).get());
             writer.Int(duration);
             writer.EndArray();
         });
@@ -138,8 +138,8 @@ void __stdcall UNativeStr_WithSuffix(ubotAppShutupAllMember)(void* ctx, Encoding
     auto rpcResult = context->rpc.Call("shutup_all_member", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(source)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
+            writer.String(EncodingImpl::TempFrom(source).get());
             writer.Bool(shutupSwitch);
             writer.EndArray();
         });
@@ -151,14 +151,14 @@ Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetMemberName)(void* c
     auto rpcResult = context->rpc.Call("get_user_avatar", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(source)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(target)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
+            writer.String(EncodingImpl::TempFrom(source).get());
+            writer.String(EncodingImpl::TempFrom(target).get());
             writer.EndArray();
         });
     auto result = rpcResult.Result.IsString() ? rpcResult.Result.GetString() : nullptr;
-    static auto data = EncodingImpl::PermTo_S(result);
-    return EncodingImpl::PermTo_G(data);
+    static auto data = EncodingImpl::PermTo(result);
+    return data.get();
 }
 
 Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetUserAvatar)(void* ctx, Encoding::ConstStr bot, Encoding::ConstStr id)
@@ -167,13 +167,13 @@ Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetUserAvatar)(void* c
     auto rpcResult = context->rpc.Call("get_user_avatar", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(id)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
+            writer.String(EncodingImpl::TempFrom(id).get());
             writer.EndArray();
         });
     auto result = rpcResult.Result.IsString() ? rpcResult.Result.GetString() : nullptr;
-    static auto data = EncodingImpl::PermTo_S(result);
-    return EncodingImpl::PermTo_G(data);
+    static auto data = EncodingImpl::PermTo(result);
+    return data.get();
 }
 
 Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetSelfID)(void* ctx, Encoding::ConstStr bot)
@@ -182,12 +182,12 @@ Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetSelfID)(void* ctx, 
     auto rpcResult = context->rpc.Call("get_self_id", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
             writer.EndArray();
         });
     auto result = rpcResult.Result.IsString() ? rpcResult.Result.GetString() : nullptr;
-    static auto data = EncodingImpl::PermTo_S(result);
-    return EncodingImpl::PermTo_G(data);
+    static auto data = EncodingImpl::PermTo(result);
+    return data.get();
 }
 
 Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetPlatformID)(void* ctx, Encoding::ConstStr bot)
@@ -196,12 +196,12 @@ Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetPlatformID)(void* c
     auto rpcResult = context->rpc.Call("get_platform_id", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
             writer.EndArray();
         });
     auto result = rpcResult.Result.IsString() ? rpcResult.Result.GetString() : nullptr;
-    static auto data = EncodingImpl::PermTo_S(result);
-    return EncodingImpl::PermTo_G(data);
+    static auto data = EncodingImpl::PermTo(result);
+    return data.get();
 }
 
 Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetGroupList)(void* ctx, Encoding::ConstStr bot)
@@ -210,11 +210,11 @@ Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetGroupList)(void* ct
     auto rpcResult = context->rpc.Call("get_group_list", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
             writer.EndArray();
         });
-    static auto data = EncodingImpl::PermTo_S(fromStringArray(rpcResult.Result, "|").c_str());
-    return EncodingImpl::PermTo_G(data);
+    static auto data = EncodingImpl::PermTo(fromStringArray(rpcResult.Result, "|").c_str());
+    return data.get();
 }
 
 Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetMemberList)(void* ctx, Encoding::ConstStr bot, Encoding::ConstStr id)
@@ -223,12 +223,12 @@ Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetMemberList)(void* c
     auto rpcResult = context->rpc.Call("get_member_list", [&](TWriter& writer)
         {
             writer.StartArray();
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(bot)));
-            writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(id)));
+            writer.String(EncodingImpl::TempFrom(bot).get());
+            writer.String(EncodingImpl::TempFrom(id).get());
             writer.EndArray();
         });
-    static auto data = EncodingImpl::PermTo_S(fromStringArray(rpcResult.Result, "|").c_str());
-    return EncodingImpl::PermTo_G(data);
+    static auto data = EncodingImpl::PermTo(fromStringArray(rpcResult.Result, "|").c_str());
+    return data.get();
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetOnReceiveChatMessageHandler)(void* ctx, void* user,
@@ -257,12 +257,12 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetOnReceiveChatMessageHandler)(void
             auto result = handler(
                 ctx,
                 user,
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(bot)),
+                EncodingImpl::TempTo(bot).get(),
                 static_cast<ChatMessageType>(type),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(source)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(sender)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(message)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(infoText.GetString())));
+                EncodingImpl::TempTo(source).get(),
+                EncodingImpl::TempTo(sender).get(),
+                EncodingImpl::TempTo(message).get(),
+                EncodingImpl::TempTo(infoText.GetString()).get());
 
             WriteEventResult(writer, result);
         });
@@ -286,10 +286,10 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberJoinedHandler)(void* ctx,
             auto result = handler(
                 ctx,
                 user,
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(bot)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(source)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(sender)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(inviter)));
+                EncodingImpl::TempTo(bot).get(),
+                EncodingImpl::TempTo(source).get(),
+                EncodingImpl::TempTo(sender).get(),
+                EncodingImpl::TempTo(inviter).get());
 
             WriteEventResult(writer, result);
         });
@@ -311,9 +311,9 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberLeftHandler)(void* ctx, v
             auto result = handler(
                 ctx,
                 user,
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(bot)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(source)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(sender)));
+                EncodingImpl::TempTo(bot).get(),
+                EncodingImpl::TempTo(source).get(),
+                EncodingImpl::TempTo(sender).get());
 
             WriteEventResult(writer, result);
         });
@@ -340,10 +340,10 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessGroupInvitationHandler)(vo
             auto result = handler(
                 ctx,
                 user,
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(bot)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(sender)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(target)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(reason)),
+                EncodingImpl::TempTo(bot).get(),
+                EncodingImpl::TempTo(sender).get(),
+                EncodingImpl::TempTo(target).get(),
+                EncodingImpl::TempTo(reason).get(),
                 buf);
 
             WriteEventResultWithReason(writer, result, buf);
@@ -369,9 +369,9 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessFriendRequestHandler)(void
             auto result = handler(
                 ctx,
                 user,
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(bot)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(sender)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(reason)),
+                EncodingImpl::TempTo(bot).get(),
+                EncodingImpl::TempTo(sender).get(),
+                EncodingImpl::TempTo(reason).get(),
                 buf);
 
             WriteEventResultWithReason(writer, result, buf);
@@ -401,11 +401,11 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessMembershipRequestHandler)(
             auto result = handler(
                 ctx,
                 user,
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(bot)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(source)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(sender)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(inviter)),
-                EncodingImpl::TempTo_G(EncodingImpl::TempTo_S(reason)),
+                EncodingImpl::TempTo(bot).get(),
+                EncodingImpl::TempTo(source).get(),
+                EncodingImpl::TempTo(sender).get(),
+                EncodingImpl::TempTo(inviter).get(),
+                EncodingImpl::TempTo(reason).get(),
                 buf);
 
             WriteEventResultWithReason(writer, result, buf);
@@ -420,15 +420,15 @@ void __stdcall UNativeStr_WithSuffix(ubotAppHost)(
     Encoding::ConstStr id)
 {
     auto context = static_cast<AppContext*>(ctx);
-    HostUBotClient(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(op)), 
-        EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(urlStr)), &context->rpc,
+    HostUBotClient(EncodingImpl::TempFrom(op).get(), 
+        EncodingImpl::TempFrom(urlStr).get(), &context->rpc,
         [=](const skyr::url& managerUrl, JsonRpc& rpc) -> std::string {
             auto clientUrl = managerUrl;
             std::string clientTken;
             auto registered = rpc.Call("register_app", [&](TWriter& writer)
                 {
                     writer.StartArray();
-                    writer.String(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(id)));
+                    writer.String(EncodingImpl::TempFrom(id).get());
                     writer.EndArray();
                 });
             if (registered.Error.has_value())
@@ -436,7 +436,7 @@ void __stdcall UNativeStr_WithSuffix(ubotAppHost)(
                 return "";
             }
             clientUrl.set_pathname("/api/app");
-            clientUrl.set_search("?id=" + skyr::percent_encode(std::string(EncodingImpl::TempFrom_G(EncodingImpl::TempFrom_S(id)))) + "&token=" + registered.Result.GetString());
+            clientUrl.set_search("?id=" + skyr::percent_encode(std::string(EncodingImpl::TempFrom(id).get())) + "&token=" + registered.Result.GetString());
             return clientUrl.href();
         }, context->startup);
 }
