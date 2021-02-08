@@ -174,11 +174,14 @@ void __stdcall UNativeStr_WithSuffix(ubotAppHost)(
     void* ctx,
     Encoding::ConstStr op,
     Encoding::ConstStr urlStr,
-    Encoding::ConstStr id)
+    Encoding::ConstStr id,
+    bool mtf)
 {
     auto context = static_cast<AppContext*>(ctx);
     HostUBotClient(EncodingImpl::TempFrom(op).get(), 
-        EncodingImpl::TempFrom(urlStr).get(), &context->rpc,
+        EncodingImpl::TempFrom(urlStr).get(), 
+        &context->rpc,
+        mtf,
         [=](const skyr::url& managerUrl, JsonRpc& rpc) -> std::string {
             auto clientUrl = managerUrl;
             std::string clientTken;
