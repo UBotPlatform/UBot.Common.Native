@@ -72,7 +72,7 @@ namespace ubot
 		rapidjson::Document Result;
 		std::optional<JsonRpcError> Error;
 	};
-	using TWriter = rapidjson::Writer<rapidjson::GenericStringBuffer<rapidjson::UTF8<> >>;
+	using TWriter = rapidjson::Writer<rapidjson::StringBuffer>;
 	class JsonRpc
 	{
 	public:

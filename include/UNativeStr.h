@@ -1,13 +1,13 @@
 #pragma once
 #if !(defined(UNativeStr_WindowsAnsi) || defined(UNativeStr_WideString) || defined(UNativeStr_UTF8))
 #if defined(_UNICODE)
-#pragma message "UBot: Encoding not specified, use WideString by default because _UNICODE detected"
+#pragma message ("UBot: Encoding not specified, use WideString by default because _UNICODE detected")
 #define UNativeStr_WideString
 #elif defined(_WIN32)
-#pragma message "UBot: Encoding not specified, use WindowsAnsi by default because _UNICODE is not detected but you are using Windows"
+#pragma message ("UBot: Encoding not specified, use WindowsAnsi by default because _UNICODE is not detected but you are using Windows")
 #define UNativeStr_WindowsAnsi
 #else
-#pragma message "UBot: Encoding not specified, use UTF-8 by default because _UNICODE and _WIN32 is not detected"
+#pragma message ("UBot: Encoding not specified, use UTF-8 by default because _UNICODE and _WIN32 is not detected")
 #define UNativeStr_UTF8
 #endif
 #endif

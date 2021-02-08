@@ -1,6 +1,18 @@
 LIBRARY ubot-common
 EXPORTS
 
+ubotStringBoxNew
+ubotStringBoxDelete
+
+ubotStringBoxSetA
+ubotStringBoxGetA
+
+ubotStringBoxSetW
+ubotStringBoxGetW
+
+ubotStringBoxSetU8
+ubotStringBoxGetU8
+
 ubotAppNew
 ubotAppDelete
 

@@ -1,4 +1,5 @@
 #include "UBotAppContext.h"
+#include "AppHost.h"
 
 void* __stdcall ubotAppNew()
 {

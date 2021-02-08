@@ -1,28 +1,17 @@
 #pragma once
+#include "EventResultType.h"
+#include "ChatMessageType.h"
 #include "UNativeStr.h"
 extern "C"
 {
-	enum class ChatMessageType
-	{
-		Group,
-		Private
-	};
-	enum class EventResultType
-	{
-		Ignore = 0,
-		Continue = 1,
-		Complete = 2,
-		AcceptRequest = 10,
-		RejectRequest = 20
-	};
 	void* __stdcall ubotAppNew();
 	void __stdcall ubotAppDelete(void* ctx);
 	void __stdcall UNativeStr_WithSuffix(ubotAppSetOnReceiveChatMessageHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ChatMessageType type, ubot::Encoding::ConstStr source, ubot::Encoding::ConstStr sender, ubot::Encoding::ConstStr message, ubot::Encoding::ConstStr info));
 	void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberJoinedHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr source, ubot::Encoding::ConstStr sender, ubot::Encoding::ConstStr inviter));
 	void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberLeftHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr source, ubot::Encoding::ConstStr sender));
-	void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessGroupInvitationHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr sender, ubot::Encoding::ConstStr target, ubot::Encoding::ConstStr reason, ubot::Encoding::Str respondedReason));
-	void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessFriendRequestHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr sender, ubot::Encoding::ConstStr reason, ubot::Encoding::Str respondedReason));
-	void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessMembershipRequestHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr source, ubot::Encoding::ConstStr sender, ubot::Encoding::ConstStr inviter, ubot::Encoding::ConstStr reason, ubot::Encoding::Str respondedReason));
+	void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessGroupInvitationHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr sender, ubot::Encoding::ConstStr target, ubot::Encoding::ConstStr reason, void* respondedReason));
+	void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessFriendRequestHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr sender, ubot::Encoding::ConstStr reason, void* respondedReason));
+	void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessMembershipRequestHandler)(void* ctx, void* user, EventResultType(__stdcall* handler)(void* ctx, void* user, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr source, ubot::Encoding::ConstStr sender, ubot::Encoding::ConstStr inviter, ubot::Encoding::ConstStr reason, void* respondedReason));
 	void __stdcall UNativeStr_WithSuffix(ubotAppHost)(void* ctx, ubot::Encoding::ConstStr op, ubot::Encoding::ConstStr urlStr, ubot::Encoding::ConstStr id);
 	ubot::Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetGroupName)(void* ctx, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr id);
 	ubot::Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetUserName)(void* ctx, ubot::Encoding::ConstStr bot, ubot::Encoding::ConstStr id);

@@ -25,7 +25,21 @@ target_sources(ubot-common PRIVATE
     "src/UNativeStrHelper.h"
     "src/third-party/ctpl_stl.h"
     "src/UBotAppContext.h"
-    "src/AppHostCommon.cpp")
+    "src/AppHostCommon.cpp"
+    "src/StringBoxTpl.hpp"
+    "src/StringBoxA.cpp"
+    "src/StringBoxU8.cpp"
+    "src/StringBoxW.cpp"
+    "src/StringBoxCommon.cpp"
+    "src/RpcTemplate.hpp"
+    "src/RpcTemplate/TrivialValue.hpp"
+    "src/RpcTemplate/IntArg.hpp"
+    "src/RpcTemplate/EnumArg.hpp"
+    "src/RpcTemplate/JsonRawArg.hpp"
+    "src/RpcTemplate/StringArg.hpp"
+    "src/RpcTemplate/BoolArg.hpp"
+    "src/RpcTemplate/FlattedStringArrayArg.hpp"
+    "src/RpcTemplate/NormalResultResponder.hpp")
 if(WIN32)
     target_sources(ubot-common PRIVATE "src/Export.def")
 endif()
@@ -56,5 +70,5 @@ if(UNIX)
     target_link_libraries(ubot-common PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-set_property(TARGET ubot-common PROPERTY CXX_STANDARD 17)
+set_property(TARGET ubot-common PROPERTY CXX_STANDARD 20)
 set_property(TARGET ubot-common PROPERTY CXX_STANDARD_REQUIRED ON)
