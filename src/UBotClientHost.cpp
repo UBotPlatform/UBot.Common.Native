@@ -111,7 +111,7 @@ namespace ubot
         {
             if (msg->type == ix::WebSocketMessageType::Message)
             {
-                auto msgContent = msg->str;
+                std::string msgContent = msg->str;
                 taskPool.push([rpc, msgContent = std::move(msgContent)](int)
                 {
                     rpc->FeedData(msgContent);

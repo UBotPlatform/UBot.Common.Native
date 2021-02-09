@@ -1,6 +1,7 @@
 #pragma once
 #include "TrivialValue.hpp"
 #include "JsonRpc.h"
+#include "../UNativeStrHelper.h"
 namespace ubot
 {
 	struct JsonRawArg

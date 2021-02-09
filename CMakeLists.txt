@@ -39,7 +39,13 @@ target_sources(ubot-common PRIVATE
     "src/RpcTemplate/StringArg.hpp"
     "src/RpcTemplate/BoolArg.hpp"
     "src/RpcTemplate/FlattedStringArrayArg.hpp"
-    "src/RpcTemplate/NormalResultResponder.hpp")
+    "src/RpcTemplate/NormalResultResponder.hpp"
+    "src/RpcTemplate/EventRespond.hpp"
+    "src/AsyncResponsorTpl.hpp"
+    "src/AsyncResponsorA.cpp"
+    "src/AsyncResponsorU8.cpp"
+    "src/AsyncResponsorW.cpp"
+    "src/AsyncResponsorCommon.cpp")
 if(WIN32)
     target_sources(ubot-common PRIVATE "src/Export.def")
 endif()
@@ -50,6 +56,9 @@ target_link_libraries(ubot-common PRIVATE skyr::skyr-url)
 
 find_package(RapidJSON CONFIG REQUIRED)
 target_include_directories(ubot-common PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+
+find_package(cppcoro CONFIG REQUIRED)
+target_link_libraries(ubot-common PRIVATE cppcoro)
 
 find_path(IXWEBSOCKET_INCLUDE_DIR ixwebsocket/IXWebSocket.h)
 find_library(IXWEBSOCKET_LIBRARY ixwebsocket)

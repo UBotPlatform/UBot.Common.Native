@@ -14,7 +14,7 @@ void* __stdcall ubotAppNew()
     };
     for (auto name : handler_names)
     {
-        context->rpc.SetHandler(name, [](rapidjson::Value&& params, ubot::TWriter& writer)
+        context->rpc.SetHandler(name, [](rapidjson::Value&& params, ubot::TWriter& writer) -> cppcoro::task<>
             {
                 ubot::JsonRpc::StartResult(writer);
                 writer.StartObject();
@@ -22,6 +22,7 @@ void* __stdcall ubotAppNew()
                 writer.Int(0);
                 writer.EndObject();
                 ubot::JsonRpc::EndResult(writer);
+                co_return;
             });
     }
     context->startup = [] {};

@@ -5,41 +5,6 @@
 #include "RpcTemplate.hpp"
 #include "UBotAppContext.h"
 using namespace ubot;
-struct NormalEventRespond
-{
-    using NativeType = EventResultType;
-    using NativeTypeEx = void;
-    static void Respond(TWriter& writer, EventResultType x)
-    {
-        JsonRpc::StartResult(writer);
-        writer.StartObject();
-        writer.Key("type");
-        writer.Int(static_cast<int>(x));
-        writer.EndObject();
-        JsonRpc::EndResult(writer);
-    }
-}; 
-
-struct ReasonableEventRespond
-{
-    using NativeType = EventResultType;
-    using NativeTypeEx = void*;
-    static void Respond(TWriter& writer, EventResultType x, void* reason)
-    {
-        JsonRpc::StartResult(writer);
-        writer.StartObject();
-        writer.Key("type");
-        writer.Int(static_cast<int>(x));
-        writer.Key("reason");
-        writer.String(static_cast<std::string *>(reason)->c_str());
-        writer.EndObject();
-        JsonRpc::EndResult(writer);
-    }
-    static auto MakeResultEx()
-    {
-        return std::make_unique<std::string>();
-    }
-};
 
 Encoding::ConstStr __stdcall UNativeStr_WithSuffix(ubotAppGetGroupName)(void* ctx, Encoding::ConstStr bot, Encoding::ConstStr id)
 {
@@ -129,12 +94,28 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetOnReceiveChatMessageHandler)(void
     SetNativeHandler<NormalEventRespond, StringArg, EnumArg<ChatMessageType>, StringArg, StringArg, StringArg, JsonRawArg>(context->rpc, "on_receive_chat_message", std::bind_front(handler, ctx, user));
 }
 
+void __stdcall UNativeStr_WithSuffix(ubotAppSetOnReceiveChatMessageAsyncHandler)(void* ctx, void* user,
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, ChatMessageType type, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr message, Encoding::ConstStr info, void* async_0, void* async_1))
+{
+    auto context = static_cast<AppContext*>(ctx);
+    // bot, type, source, sender, message, info
+    SetNativeAsyncHandler<StringArg, EnumArg<ChatMessageType>, StringArg, StringArg, StringArg, JsonRawArg>(context->rpc, "on_receive_chat_message", std::bind_front(handler, ctx, user));
+}
+
 void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberJoinedHandler)(void* ctx, void* user,
     EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr inviter))
 {
     auto context = static_cast<AppContext*>(ctx);
     // bot, source, sender, inviter
     SetNativeHandler<NormalEventRespond, StringArg, StringArg, StringArg, StringArg>(context->rpc, "on_member_joined", std::bind_front(handler, ctx, user));
+}
+
+void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberJoinedAsyncHandler)(void* ctx, void* user,
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr inviter, void* async_0, void* async_1))
+{
+    auto context = static_cast<AppContext*>(ctx);
+    // bot, source, sender, inviter
+    SetNativeAsyncHandler<StringArg, StringArg, StringArg, StringArg>(context->rpc, "on_member_joined", std::bind_front(handler, ctx, user));
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberLeftHandler)(void* ctx, void* user,
@@ -145,12 +126,28 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberLeftHandler)(void* ctx, v
     SetNativeHandler<NormalEventRespond, StringArg, StringArg, StringArg>(context->rpc, "on_member_left", std::bind_front(handler, ctx, user));
 }
 
+void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberLeftAsyncHandler)(void* ctx, void* user,
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, void* async_0, void* async_1))
+{
+    auto context = static_cast<AppContext*>(ctx);
+    // bot, source, sender
+    SetNativeAsyncHandler<StringArg, StringArg, StringArg>(context->rpc, "on_member_left", std::bind_front(handler, ctx, user));
+}
+
 void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessGroupInvitationHandler)(void* ctx, void* user,
     EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr sender, Encoding::ConstStr target, Encoding::ConstStr reason, void* respondedReason))
 {
     auto context = static_cast<AppContext*>(ctx);
     // bot, source, target, reason
     SetNativeHandler<ReasonableEventRespond, StringArg, StringArg, StringArg, StringArg>(context->rpc, "process_group_invitation", std::bind_front(handler, ctx, user));
+}
+
+void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessGroupInvitationAsyncHandler)(void* ctx, void* user,
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr sender, Encoding::ConstStr target, Encoding::ConstStr reason, void* async_0, void* async_1))
+{
+    auto context = static_cast<AppContext*>(ctx);
+    // bot, source, target, reason
+    SetNativeAsyncHandler<StringArg, StringArg, StringArg, StringArg>(context->rpc, "process_group_invitation", std::bind_front(handler, ctx, user));
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessFriendRequestHandler)(void* ctx, void* user,
@@ -161,6 +158,14 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessFriendRequestHandler)(void
     SetNativeHandler<ReasonableEventRespond, StringArg, StringArg, StringArg>(context->rpc, "process_friend_request", std::bind_front(handler, ctx, user));
 }
 
+void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessFriendRequestAsyncHandler)(void* ctx, void* user,
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr sender, Encoding::ConstStr reason, void* async_0, void* async_1))
+{
+    auto context = static_cast<AppContext*>(ctx);
+    // bot, sender, reason
+    SetNativeAsyncHandler<StringArg, StringArg, StringArg>(context->rpc, "process_friend_request", std::bind_front(handler, ctx, user));
+}
+
 void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessMembershipRequestHandler)(void* ctx, void* user,
     EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr inviter, Encoding::ConstStr reason, void* respondedReason))
 {
@@ -169,6 +174,13 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessMembershipRequestHandler)(
     SetNativeHandler<ReasonableEventRespond, StringArg, StringArg, StringArg, StringArg, StringArg>(context->rpc, "process_membership_request", std::bind_front(handler, ctx, user));
 }
 
+void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessMembershipRequestAsyncHandler)(void* ctx, void* user,
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr inviter, Encoding::ConstStr reason, void* async_0, void* async_1))
+{
+    auto context = static_cast<AppContext*>(ctx);
+    // bot, source, sender, inviter, reason
+    SetNativeAsyncHandler<StringArg, StringArg, StringArg, StringArg, StringArg>(context->rpc, "process_membership_request", std::bind_front(handler, ctx, user));
+}
 
 void __stdcall UNativeStr_WithSuffix(ubotAppHost)(
     void* ctx,

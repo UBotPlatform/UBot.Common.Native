@@ -1,4 +1,5 @@
 #pragma once
+#include <cppcoro/task.hpp>
 #include <string>
 #include <functional>
 #include <optional>
@@ -13,54 +14,6 @@
 
 namespace ubot
 {
-	inline bool ReadRawParam(const rapidjson::Value& params, size_t index, const char* name, const rapidjson::Value** result)
-	{
-		if (params.IsArray())
-		{
-			if (index >= params.Size())
-			{
-				return false;
-			}
-			*result = &params.GetArray()[index];
-			return true;
-		}
-		if (params.IsObject())
-		{
-			auto oMember = params.FindMember(name);
-			if (oMember == params.MemberEnd())
-			{
-				return false;
-			}
-			*result = &oMember->value;
-			return true;
-		}
-		return false;
-	}
-
-	template<typename TResult>
-	inline bool ReadParam(const rapidjson::Value& params, size_t index, const char* name, TResult* result)
-	{
-		if (params.IsArray())
-		{
-			if (index >= params.Size())
-			{
-				return false;
-			}
-			*result = params.GetArray()[index].Get<TResult>();
-			return true;
-		}
-		if (params.IsObject())
-		{
-			auto oMember = params.FindMember(name);
-			if (oMember == params.MemberEnd())
-			{
-				return false;
-			}
-			*result = oMember->value.Get<TResult>();
-			return true;
-		}
-		return false;
-	}
 	struct JsonRpcError
 	{
 		int Code;
@@ -76,14 +29,26 @@ namespace ubot
 	class JsonRpc
 	{
 	public:
+		struct BackgroundTask {
+			struct promise_type {
+				BackgroundTask get_return_object() noexcept { return {}; }
+				std::experimental::suspend_never initial_suspend() noexcept { return {}; }
+				std::experimental::suspend_never final_suspend() noexcept { return {}; }
+				void return_void() noexcept {}
+				void unhandled_exception() noexcept {}
+			};
+		};
 		void FeedData(const std::string& data)
+		{
+			rapidjson::Document document;
+			document.Parse<rapidjson::kParseFullPrecisionFlag>(data.data(), data.size());
+			FeedDocument(std::move(document));
+		}
+		BackgroundTask FeedDocument(rapidjson::Document document)
 		{
 			rapidjson::GenericStringBuffer<rapidjson::UTF8<> > result;
 			TWriter writer(result);
 			bool needResponse = false;
-
-			rapidjson::Document document;
-			document.Parse<rapidjson::kParseFullPrecisionFlag>(data.data(), data.size());
 			if (document.HasParseError()) {
 				needResponse = true;
 				writer.StartObject();
@@ -97,13 +62,13 @@ namespace ubot
 				if (document.IsArray()) {
 					writer.StartArray();
 					for (auto& member : document.GetArray()) {
-						needResponse |= ProcessData(std::move(member), writer);
+						needResponse |= co_await ProcessData(std::move(member), writer);
 					}
 					writer.EndArray();
 				}
 				else
 				{
-					needResponse |= ProcessData(std::move(document), writer);
+					needResponse |= co_await ProcessData(std::move(document), writer);
 				}
 			}
 			if (needResponse) {
@@ -115,7 +80,7 @@ namespace ubot
 		{
 			this->sender = sender;
 		}
-		void SetHandler(const std::string& name, std::function<void(rapidjson::Value&& params, TWriter& writer)> handler)
+		void SetHandler(const std::string& name, std::function<cppcoro::task<>(rapidjson::Value&& params, TWriter& writer)> handler)
 		{
 			this->handler[name] = handler;
 		}
@@ -200,8 +165,8 @@ namespace ubot
 		std::mutex mtx;
 		std::atomic_uint64_t seq = 0;
 		std::unordered_map<uint64_t, ResultBox<rapidjson::Document>*> pending;
-		std::unordered_map<std::string, std::function<void(rapidjson::Value&& params, TWriter& writer)>> handler;
-		bool ProcessData(rapidjson::Value&& value, TWriter& writer) 
+		std::unordered_map<std::string, std::function<cppcoro::task<>(rapidjson::Value&& params, TWriter& writer)>> handler;
+		cppcoro::task<bool> ProcessData(rapidjson::Value&& value, TWriter& writer)
 		{
 			if (!value.IsObject())
 			{
@@ -210,7 +175,7 @@ namespace ubot
 				writer.String("2.0");
 				this->Error(writer, JsonRpcError{ -32600 ,"Invalid Request" , std::nullopt });
 				writer.EndObject();
-				return true;
+				co_return true;
 			}
 			auto pMethod = value.FindMember("method");
 			auto pId = value.FindMember("id");
@@ -224,7 +189,7 @@ namespace ubot
 				{
 					if (isNotification)
 					{
-						return false;
+						co_return false;
 					}
 					writer.StartObject();
 					writer.Key("jsonrpc");
@@ -233,14 +198,14 @@ namespace ubot
 					oId->Accept(writer);
 					this->Error(writer, JsonRpcError{ -32600 ,"Invalid Request" , std::nullopt });
 					writer.EndObject();
-					return true;
+					co_return true;
 				}
 				auto phandler = handler.find(std::string(oMethod->GetString(), oMethod->GetStringLength()));
 				if (phandler == handler.end())
 				{
 					if (isNotification)
 					{
-						return false;
+						co_return false;
 					}
 					writer.StartObject();
 					writer.Key("jsonrpc");
@@ -249,16 +214,16 @@ namespace ubot
 					oId->Accept(writer);
 					this->Error(writer, JsonRpcError{ -32601 ,"Method not found", std::nullopt });
 					writer.EndObject();
-					return true;
+					co_return true;
 				}
 				if (isNotification)
 				{
 					rapidjson::GenericStringBuffer<rapidjson::UTF8<> > tempResult;
 					TWriter tempWriter(tempResult);
 					tempWriter.StartObject();
-					phandler->second(std::move(pParams->value), tempWriter);
+					co_await phandler->second(std::move(pParams->value), tempWriter);
 					tempWriter.EndObject();
-					return false;
+					co_return false;
 				}
 				else
 				{
@@ -267,16 +232,16 @@ namespace ubot
 					writer.String("2.0");
 					writer.Key("id");
 					oId->Accept(writer);
-					phandler->second(std::move(pParams->value), writer);
+					co_await phandler->second(std::move(pParams->value), writer);
 					writer.EndObject();
-					return true;
+					co_return true;
 				}
 			}
 			else
 			{
 				if (oId == nullptr || !oId->IsUint64())
 				{
-					return false;
+					co_return false;
 				}
 				ResultBox<rapidjson::Document> *resultBox;
 				auto id = oId->GetUint64();
@@ -285,7 +250,7 @@ namespace ubot
 					auto resultBoxKV = pending.find(id);
 					if (resultBoxKV == pending.end())
 					{
-						return false;
+						co_return false;
 					}
 					resultBox = resultBoxKV->second;
 					pending.erase(resultBoxKV);
@@ -293,7 +258,7 @@ namespace ubot
 				rapidjson::Document doc;
 				doc.CopyFrom(value, doc.GetAllocator(), true);
 				resultBox->SetResult(std::move(doc));
-				return false;
+				co_return false;
 			}
 		}
 	};
