@@ -167,7 +167,7 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetOnReceiveChatMessageHandler)(void
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetOnReceiveChatMessageAsyncHandler)(void* ctx, void* user,
-    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, ChatMessageType type, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr message, Encoding::ConstStr info, void* async_0, void* async_1))
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, ChatMessageType type, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr message, Encoding::ConstStr info, void* async))
 {
     auto context = static_cast<AppContext*>(ctx);
     // bot, type, source, sender, message, info
@@ -183,7 +183,7 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberJoinedHandler)(void* ctx,
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberJoinedAsyncHandler)(void* ctx, void* user,
-    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr inviter, void* async_0, void* async_1))
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr inviter, void* async))
 {
     auto context = static_cast<AppContext*>(ctx);
     // bot, source, sender, inviter
@@ -199,7 +199,7 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberLeftHandler)(void* ctx, v
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetOnMemberLeftAsyncHandler)(void* ctx, void* user,
-    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, void* async_0, void* async_1))
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, void* async))
 {
     auto context = static_cast<AppContext*>(ctx);
     // bot, source, sender
@@ -215,7 +215,7 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessGroupInvitationHandler)(vo
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessGroupInvitationAsyncHandler)(void* ctx, void* user,
-    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr sender, Encoding::ConstStr target, Encoding::ConstStr reason, void* async_0, void* async_1))
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr sender, Encoding::ConstStr target, Encoding::ConstStr reason, void* async))
 {
     auto context = static_cast<AppContext*>(ctx);
     // bot, source, target, reason
@@ -231,7 +231,7 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessFriendRequestHandler)(void
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessFriendRequestAsyncHandler)(void* ctx, void* user,
-    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr sender, Encoding::ConstStr reason, void* async_0, void* async_1))
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr sender, Encoding::ConstStr reason, void* async))
 {
     auto context = static_cast<AppContext*>(ctx);
     // bot, sender, reason
@@ -247,7 +247,7 @@ void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessMembershipRequestHandler)(
 }
 
 void __stdcall UNativeStr_WithSuffix(ubotAppSetProcessMembershipRequestAsyncHandler)(void* ctx, void* user,
-    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr inviter, Encoding::ConstStr reason, void* async_0, void* async_1))
+    EventResultType(__stdcall* handler)(void* ctx, void* user, Encoding::ConstStr bot, Encoding::ConstStr source, Encoding::ConstStr sender, Encoding::ConstStr inviter, Encoding::ConstStr reason, void* async))
 {
     auto context = static_cast<AppContext*>(ctx);
     // bot, source, sender, inviter, reason
