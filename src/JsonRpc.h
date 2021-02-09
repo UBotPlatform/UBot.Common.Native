@@ -10,8 +10,7 @@
 #include <chrono>
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
-#include "ResultBox.h"
-
+#include "spawn.hpp"
 namespace ubot
 {
 	struct JsonRpcError
@@ -29,22 +28,13 @@ namespace ubot
 	class JsonRpc
 	{
 	public:
-		struct BackgroundTask {
-			struct promise_type {
-				BackgroundTask get_return_object() noexcept { return {}; }
-				std::experimental::suspend_never initial_suspend() noexcept { return {}; }
-				std::experimental::suspend_never final_suspend() noexcept { return {}; }
-				void return_void() noexcept {}
-				void unhandled_exception() noexcept {}
-			};
-		};
 		void FeedData(const std::string& data)
 		{
 			rapidjson::Document document;
 			document.Parse<rapidjson::kParseFullPrecisionFlag>(data.data(), data.size());
 			FeedDocument(std::move(document));
 		}
-		BackgroundTask FeedDocument(rapidjson::Document document)
+		spawn_t FeedDocument(rapidjson::Document document)
 		{
 			rapidjson::GenericStringBuffer<rapidjson::UTF8<> > result;
 			TWriter writer(result);
@@ -84,7 +74,49 @@ namespace ubot
 		{
 			this->handler[name] = handler;
 		}
-		JsonRpcResult Call(const std::string &name, std::function<void(TWriter& writer)> paramsBuilder)
+		struct CallAwaiter
+		{
+		private:
+			JsonRpcResult result;
+			JsonRpc *rpc;
+			std::string request;
+			uint64_t curSeq;
+			std::experimental::coroutine_handle<> handle;
+		public:
+			CallAwaiter(JsonRpc* _rpc, std::string _request, uint64_t _curSeq)
+				: rpc(_rpc), request(std::move(_request)), curSeq(_curSeq), handle(nullptr)
+			{
+
+			}
+			bool await_ready() noexcept
+			{
+				return false;
+			}
+			void await_suspend(std::experimental::coroutine_handle<> handle)
+			{
+				this->handle = handle;
+				auto localRpc = this->rpc;
+				{
+					std::lock_guard<std::mutex> mutx(localRpc->mtx);
+					localRpc->pending[curSeq] = this;
+				}
+				localRpc->sender(request);
+			}
+			JsonRpcResult await_resume() noexcept
+			{
+				return std::move(result);
+			}
+			void set_result(JsonRpcResult x)
+			{
+				result = std::move(x);
+				if (this->handle)
+				{
+					this->handle.resume();
+				}
+			}
+		};
+		template<typename TParamsBuilder, std::enable_if_t<std::is_convertible_v<TParamsBuilder, std::function<void(TWriter& writer)>>, int> = 0>
+		CallAwaiter Call(const std::string &name, TParamsBuilder paramsBuilder)
 		{
 			uint64_t curSeq = this->seq++;
 			rapidjson::GenericStringBuffer<rapidjson::UTF8<> > requestText;
@@ -100,62 +132,7 @@ namespace ubot
 			paramsBuilder(writer);
 			writer.EndObject();
 			writer.Flush();
-
-			ResultBox<rapidjson::Document> resultBox;
-			{
-				std::lock_guard<std::mutex> mutx(mtx);
-				pending[curSeq] = &resultBox;
-			}
-			this->sender(std::string(requestText.GetString(), requestText.GetSize()));
-			auto respond = resultBox.WaitForResult(std::chrono::seconds(10));
-			if (!respond.has_value()) {
-				std::lock_guard<std::mutex> mutx(mtx);
-				auto resultBoxKV = pending.find(curSeq);
-				if (resultBoxKV != pending.end())
-				{
-					pending.erase(resultBoxKV);
-				}
-			}
-			if (!respond.has_value())
-			{
-				return JsonRpcResult{ rapidjson::Document(), JsonRpcError{ -32000, "RPC call timed out", std::nullopt } };
-			}
-			auto& value = respond.value();
-			auto pError = value.FindMember("error");
-			if (pError != value.MemberEnd())
-			{
-				auto oError = &pError->value;
-				auto errorInfo = JsonRpcError{ -32000, "Unknown error", std::nullopt };
-
-				auto pCode = oError->FindMember("code");
-				if (pCode != oError->MemberEnd() && pCode->value.IsInt())
-				{
-					errorInfo.Code = pCode->value.GetInt();
-				}
-
-				auto pMessage = oError->FindMember("message");
-				if (pMessage != oError->MemberEnd() && pMessage->value.IsString())
-				{
-					errorInfo.Message = std::string(pCode->value.GetString(), pCode->value.GetStringLength());
-				}
-
-				auto pData = oError->FindMember("data");
-				if (pData != oError->MemberEnd() )
-				{
-					rapidjson::Document errorDataDoc;
-					errorDataDoc.CopyFrom(pCode->value, errorDataDoc.GetAllocator(), true);
-					errorInfo.Data = std::optional(std::move(errorDataDoc));
-				}
-				return JsonRpcResult{ rapidjson::Document(), std::optional(std::move(errorInfo)) };
-			}
-			auto pResult = value.FindMember("result");
-			if (pResult == value.MemberEnd())
-			{
-				return JsonRpcResult{ rapidjson::Document(), JsonRpcError{ -32603, "Internal error", std::nullopt } };
-			}
-			rapidjson::Document resultDoc;
-			resultDoc.CopyFrom(pResult->value, resultDoc.GetAllocator(), true);
-			return JsonRpcResult{ std::move(resultDoc), std::nullopt };
+			return CallAwaiter(this, std::string(requestText.GetString(), requestText.GetSize()), curSeq);
 		}
 		static void StartResult(TWriter& writer);
 		static void EndResult(TWriter& writer);
@@ -164,7 +141,7 @@ namespace ubot
 		std::function<void(const std::string& data)> sender;
 		std::mutex mtx;
 		std::atomic_uint64_t seq = 0;
-		std::unordered_map<uint64_t, ResultBox<rapidjson::Document>*> pending;
+		std::unordered_map<uint64_t, CallAwaiter*> pending;
 		std::unordered_map<std::string, std::function<cppcoro::task<>(rapidjson::Value&& params, TWriter& writer)>> handler;
 		cppcoro::task<bool> ProcessData(rapidjson::Value&& value, TWriter& writer)
 		{
@@ -243,23 +220,59 @@ namespace ubot
 				{
 					co_return false;
 				}
-				ResultBox<rapidjson::Document> *resultBox;
+				CallAwaiter *resultAwaiter;
 				auto id = oId->GetUint64();
 				{
 					std::lock_guard<std::mutex> mutx(mtx);
-					auto resultBoxKV = pending.find(id);
-					if (resultBoxKV == pending.end())
+					auto resultAwaiterKV = pending.find(id);
+					if (resultAwaiterKV == pending.end())
 					{
 						co_return false;
 					}
-					resultBox = resultBoxKV->second;
-					pending.erase(resultBoxKV);
+					resultAwaiter = resultAwaiterKV->second;
+					pending.erase(resultAwaiterKV);
 				}
-				rapidjson::Document doc;
-				doc.CopyFrom(value, doc.GetAllocator(), true);
-				resultBox->SetResult(std::move(doc));
+				resultAwaiter->set_result(ParseRpcResult(value));
 				co_return false;
 			}
+		}
+		static JsonRpcResult ParseRpcResult(const rapidjson::Value &value)
+		{
+			auto pError = value.FindMember("error");
+			if (pError != value.MemberEnd())
+			{
+				auto oError = &pError->value;
+				auto errorInfo = JsonRpcError{ -32000, "Unknown error", std::nullopt };
+
+				auto pCode = oError->FindMember("code");
+				if (pCode != oError->MemberEnd() && pCode->value.IsInt())
+				{
+					errorInfo.Code = pCode->value.GetInt();
+				}
+
+				auto pMessage = oError->FindMember("message");
+				if (pMessage != oError->MemberEnd() && pMessage->value.IsString())
+				{
+					errorInfo.Message = std::string(pCode->value.GetString(), pCode->value.GetStringLength());
+				}
+
+				auto pData = oError->FindMember("data");
+				if (pData != oError->MemberEnd())
+				{
+					rapidjson::Document errorDataDoc;
+					errorDataDoc.CopyFrom(pCode->value, errorDataDoc.GetAllocator(), true);
+					errorInfo.Data = std::optional(std::move(errorDataDoc));
+				}
+				return JsonRpcResult{ rapidjson::Document(), std::optional(std::move(errorInfo)) };
+			}
+			auto pResult = value.FindMember("result");
+			if (pResult == value.MemberEnd())
+			{
+				return JsonRpcResult{ rapidjson::Document(), JsonRpcError{ -32603, "Internal error", std::nullopt } };
+			}
+			rapidjson::Document resultDoc;
+			resultDoc.CopyFrom(pResult->value, resultDoc.GetAllocator(), true);
+			return JsonRpcResult{ std::move(resultDoc), std::nullopt };
 		}
 	};
 }

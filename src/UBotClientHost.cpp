@@ -1,4 +1,5 @@
 #include "UBotClientHost.h"
+#include "ResultBox.h"
 namespace ubot
 {
     std::unique_ptr<ix::WebSocket> DialRouter(
@@ -39,7 +40,7 @@ namespace ubot
             }
             auto managerUrlStr = managerUrl.href();
             std::cout << "Applying to " << managerUrlStr << std::endl;
-            ubot::ResultBox<bool> connectResult;
+            ubot::ResultBox<nullptr_t> connectResult;
             ix::WebSocket managerConn;
             ubot::JsonRpc managerRpc;
             managerConn.disableAutomaticReconnection();
@@ -56,7 +57,7 @@ namespace ubot
                         managerRpc.FeedData(msg->str);
                         break;
                     case ix::WebSocketMessageType::Open:
-                        connectResult.SetResult(true);
+                        connectResult.SetResult(nullptr);
                         break;
                     case ix::WebSocketMessageType::Error:
                         break;
@@ -64,8 +65,10 @@ namespace ubot
                 }
             );
             managerConn.start();
-            connectResult.WaitForResult(std::chrono::seconds(5));
-            clientUrlStr = registerClient(managerUrl, managerRpc);
+            if (connectResult.WaitForResult(std::chrono::seconds(5)).has_value())
+            {
+                clientUrlStr = registerClient(managerUrl, managerRpc);
+            }
             managerConn.stop();
             if (clientUrlStr.length() == 0)
             {

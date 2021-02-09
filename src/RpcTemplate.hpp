@@ -1,4 +1,5 @@
 #pragma once
+#include <cppcoro/sync_wait.hpp>
 #include "RpcTemplate/TrivialValue.hpp"
 #include "RpcTemplate/IntArg.hpp"
 #include "RpcTemplate/EnumArg.hpp"
@@ -8,6 +9,7 @@
 #include "RpcTemplate/FlattedStringArrayArg.hpp"
 #include "RpcTemplate/NormalResultResponder.hpp"
 #include "RpcTemplate/EventRespond.hpp"
+#include "spawn.hpp"
 namespace ubot
 {
 	template<typename TResponder, typename... TArgs, typename THandler, size_t... Indices>
@@ -117,7 +119,33 @@ namespace ubot
 		const std::string& name,
 		typename TArgs::NativeType... args)
 	{
-		auto raw = rpc.Call(name, [&](TWriter& writer)
+		auto raw = cppcoro::sync_wait(rpc.Call(name, [&](TWriter& writer)
+			{
+				writer.StartArray();
+				[[maybe_unused]] int dummy[] = {
+					(TArgs::Write(writer, args), 0)...
+				};
+				writer.EndArray();
+			}));
+		if constexpr (std::is_void_v<TResult>)
+		{
+			return;
+		}
+		else
+		{
+			return TResult::PempRead(raw.Error.has_value() ? nullptr : &raw.Result);
+		}
+	}
+
+	template<typename TResult, 
+		typename... TArgs, 
+		typename THandler>
+	spawn_t CallFromNativeAsync(ubot::JsonRpc& rpc,
+		const std::string& name,
+		typename TArgs::NativeType... args, 
+		typename THandler handle)
+	{
+		JsonRpcResult raw = co_await rpc.Call(name, [&](TWriter& writer)
 			{
 				writer.StartArray();
 				[[maybe_unused]] int dummy[] = {
@@ -127,11 +155,14 @@ namespace ubot
 			});
 		if constexpr (std::is_void_v<TResult>)
 		{
-			return;
+			static_assert(std::is_convertible_v<THandler, std::function<void()>>, "invalid handler");
+			handle();
 		}
 		else
 		{
-			return TResult::PempRead(raw.Error.has_value() ? nullptr : &raw.Result);
+			static_assert(std::is_convertible_v<THandler, std::function<void(typename TResult::NativeType result)>>, "invalid handler");
+			auto nativeResult = TResult::TempRead(raw.Error.has_value() ? nullptr : &raw.Result);
+			handle(nativeResult.get());
 		}
 	}
 }
