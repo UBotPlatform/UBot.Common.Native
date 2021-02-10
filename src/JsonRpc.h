@@ -12,6 +12,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
 #include "spawn.hpp"
+#include "unordered_string_map.hpp"
 namespace ubot
 {
 	struct JsonRpcError
@@ -29,7 +30,7 @@ namespace ubot
 	class JsonRpc
 	{
 	public:
-		void FeedData(const std::string& data)
+		void FeedData(std::string_view data)
 		{
 			rapidjson::Document document;
 			document.Parse<rapidjson::kParseFullPrecisionFlag>(data.data(), data.size());
@@ -71,9 +72,9 @@ namespace ubot
 		{
 			this->sender = sender;
 		}
-		void SetHandler(const std::string& name, std::function<cppcoro::task<>(rapidjson::Value&& params, TWriter& writer)> handler)
+		void SetHandler(std::string_view name, std::function<cppcoro::task<>(rapidjson::Value&& params, TWriter& writer)> handler)
 		{
-			this->handler[name] = handler;
+			this->handler[std::string(name)] = handler;
 		}
 		struct CallAwaiter
 		{
@@ -122,7 +123,7 @@ namespace ubot
 			}
 		};
 		template<typename TParamsBuilder, std::enable_if_t<std::is_convertible_v<TParamsBuilder, std::function<void(TWriter& writer)>>, int> = 0>
-		CallAwaiter Call(const std::string &name, TParamsBuilder paramsBuilder, bool canRunOnMessageThread = false)
+		CallAwaiter Call(std::string_view name, TParamsBuilder paramsBuilder, bool canRunOnMessageThread = false)
 		{
 			uint64_t curSeq = this->seq++;
 			rapidjson::GenericStringBuffer<rapidjson::UTF8<> > requestText;
@@ -155,7 +156,7 @@ namespace ubot
 		std::mutex mtx;
 		std::atomic_uint64_t seq = 0;
 		std::unordered_map<uint64_t, CallAwaiter*> pending;
-		std::unordered_map<std::string, std::function<cppcoro::task<>(rapidjson::Value&& params, TWriter& writer)>> handler;
+		unordered_string_map<std::function<cppcoro::task<>(rapidjson::Value&& params, TWriter& writer)>> handler;
 		cppcoro::task<bool> ProcessData(rapidjson::Value&& value, TWriter& writer)
 		{
 			if (!value.IsObject())
@@ -190,7 +191,7 @@ namespace ubot
 					writer.EndObject();
 					co_return true;
 				}
-				auto phandler = handler.find(std::string(oMethod->GetString(), oMethod->GetStringLength()));
+				auto phandler = handler.find(std::string_view(oMethod->GetString(), oMethod->GetStringLength()));
 				if (phandler == handler.end())
 				{
 					if (isNotification)

@@ -23,7 +23,6 @@ target_sources(ubot-common PRIVATE
     "src/UBotClientHost.h"
     "src/UNativeStrHelper.cpp"
     "src/UNativeStrHelper.h"
-    "src/third-party/ctpl_stl.h"
     "src/UBotAppContext.h"
     "src/AppHostCommon.cpp"
     "src/StringBoxTpl.hpp"
@@ -45,7 +44,8 @@ target_sources(ubot-common PRIVATE
     "src/AsyncResponsorA.cpp"
     "src/AsyncResponsorU8.cpp"
     "src/AsyncResponsorW.cpp"
-    "src/AsyncResponsorCommon.cpp")
+    "src/AsyncResponsorCommon.cpp"
+    "src/unordered_string_map.hpp")
 if(WIN32)
     target_sources(ubot-common PRIVATE "src/Export.def")
 endif()

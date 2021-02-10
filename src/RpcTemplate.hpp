@@ -14,7 +14,7 @@ namespace ubot
 {
 	template<typename TResponder, typename... TArgs, typename THandler, size_t... Indices>
 	void SetNativeHandlerImpl(ubot::JsonRpc& rpc, 
-		const std::string& name, 
+		std::string_view name, 
 		THandler handler,
 		std::index_sequence<Indices...>)
 	{
@@ -56,7 +56,7 @@ namespace ubot
 
 	template<typename TResponder, typename... TArgs, typename THandler>
 	void SetNativeHandler(ubot::JsonRpc& rpc,
-		const std::string& name,
+		std::string_view name,
 		THandler handler)
 	{
 		SetNativeHandlerImpl<TResponder, TArgs...>(rpc, name, handler, std::index_sequence_for<TArgs...>{});
@@ -71,7 +71,7 @@ namespace ubot
 
 	template<typename... TArgs, typename THandler, size_t... Indices>
 	void SetNativeAsyncHandlerImpl(ubot::JsonRpc& rpc,
-		const std::string& name,
+		std::string_view name,
 		THandler handler,
 		std::index_sequence<Indices...>)
 	{
@@ -109,7 +109,7 @@ namespace ubot
 
 	template<typename... TArgs, typename THandler>
 	void SetNativeAsyncHandler(ubot::JsonRpc& rpc,
-		const std::string& name,
+		std::string_view name,
 		THandler handler)
 	{
 		SetNativeAsyncHandlerImpl<TArgs...>(rpc, name, handler, std::index_sequence_for<TArgs...>{});
@@ -128,7 +128,7 @@ namespace ubot
 
 	template<typename TResult, typename... TArgs>
 	typename auto CallFromNative(ubot::JsonRpc& rpc,
-		const std::string& name,
+		std::string_view name,
 		typename TArgs::NativeType... args)
 	{
 		auto raw = cppcoro::sync_wait(rpc.Call(name, [&](TWriter& writer)
@@ -153,7 +153,7 @@ namespace ubot
 		typename... TArgs, 
 		typename THandler>
 	spawn_t CallFromNativeAsync(ubot::JsonRpc& rpc,
-		const std::string& name,
+		std::string_view name,
 		typename TArgs::NativeType... args, 
 		typename THandler handle)
 	{
