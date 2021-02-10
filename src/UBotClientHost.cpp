@@ -103,22 +103,16 @@ namespace ubot
         const char* op,
         const char* urlStr,
         ubot::JsonRpc* rpc,
-        bool mtf /*multi-thread feeding. Do not set to false when using blocking calls, otherwise you can not call API in event handler.*/,
         std::function<std::string(const skyr::url& managerUrl, ubot::JsonRpc& rpc)> registerClient,
         std::function<void()> startup)
     {
         ix::initNetSystem();
-        ctpl::thread_pool taskPool(mtf ? 4 : 1);
         std::unique_ptr<ix::WebSocket> ws;
         auto onMessageCallback = [&](const ix::WebSocketMessagePtr& msg)
         {
             if (msg->type == ix::WebSocketMessageType::Message)
             {
-                std::string msgContent = msg->str;
-                taskPool.push([rpc, msgContent = std::move(msgContent)](int)
-                {
-                    rpc->FeedData(msgContent);
-                });
+                rpc->FeedData(msg->str);
             }
         };
         for (int retryCount = 0; retryCount < 5; retryCount++)
@@ -140,10 +134,9 @@ namespace ubot
             {
                 ws->sendText(data);
             });
-        taskPool.push([startup](int)
-            {
-                startup();
-            });
+        rpc->PushTask([startup] {
+            startup();
+        });
         ws->run();
         rpc->SetSender(nullptr);
     }

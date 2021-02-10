@@ -138,7 +138,7 @@ namespace ubot
 					(TArgs::Write(writer, args), 0)...
 				};
 				writer.EndArray();
-			}));
+			}, true));
 		if constexpr (std::is_void_v<TResult>)
 		{
 			return;

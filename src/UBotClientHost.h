@@ -8,7 +8,6 @@
 #include <memory>
 #include "JsonRpc.h"
 #include <thread>
-#include "third-party/ctpl_stl.h"
 namespace ubot
 {
     std::unique_ptr<ix::WebSocket> DialRouter(
@@ -20,7 +19,6 @@ namespace ubot
         const char* op,
         const char* urlStr,
         ubot::JsonRpc* rpc,
-        bool mtf /* multi-thread feeding */,
         std::function<std::string(const skyr::url& managerUrl, ubot::JsonRpc& rpc)> registerClient,
         std::function<void()> startup);
 }

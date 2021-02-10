@@ -1,5 +1,6 @@
 #pragma once
 #include <cppcoro/task.hpp>
+#include <cppcoro/static_thread_pool.hpp>
 #include <string>
 #include <functional>
 #include <optional>
@@ -82,9 +83,10 @@ namespace ubot
 			std::string request;
 			uint64_t curSeq;
 			std::experimental::coroutine_handle<> handle;
+			bool m_can_run_on_message_thread;
 		public:
-			CallAwaiter(JsonRpc* _rpc, std::string _request, uint64_t _curSeq)
-				: rpc(_rpc), request(std::move(_request)), curSeq(_curSeq), handle(nullptr)
+			CallAwaiter(JsonRpc* _rpc, std::string _request, uint64_t _curSeq, bool _can_run_on_message_thread = false)
+				: rpc(_rpc), request(std::move(_request)), curSeq(_curSeq), handle(nullptr), m_can_run_on_message_thread(_can_run_on_message_thread)
 			{
 
 			}
@@ -114,9 +116,13 @@ namespace ubot
 					this->handle.resume();
 				}
 			}
+			bool can_run_on_message_thread() const noexcept
+			{
+				return m_can_run_on_message_thread;
+			}
 		};
 		template<typename TParamsBuilder, std::enable_if_t<std::is_convertible_v<TParamsBuilder, std::function<void(TWriter& writer)>>, int> = 0>
-		CallAwaiter Call(const std::string &name, TParamsBuilder paramsBuilder)
+		CallAwaiter Call(const std::string &name, TParamsBuilder paramsBuilder, bool canRunOnMessageThread = false)
 		{
 			uint64_t curSeq = this->seq++;
 			rapidjson::GenericStringBuffer<rapidjson::UTF8<> > requestText;
@@ -132,12 +138,19 @@ namespace ubot
 			paramsBuilder(writer);
 			writer.EndObject();
 			writer.Flush();
-			return CallAwaiter(this, std::string(requestText.GetString(), requestText.GetSize()), curSeq);
+			return CallAwaiter(this, std::string(requestText.GetString(), requestText.GetSize()), curSeq, canRunOnMessageThread);
+		}
+		template<typename TEntry, std::enable_if_t<std::is_convertible_v<TEntry, std::function<void()>>, int> = 0>
+		spawn_t PushTask(TEntry entry)
+		{
+			co_await handlerRunner.schedule();
+			entry();
 		}
 		static void StartResult(TWriter& writer);
 		static void EndResult(TWriter& writer);
 		static void Error(TWriter& writer, const JsonRpcError& error);
 	private:
+		cppcoro::static_thread_pool handlerRunner;
 		std::function<void(const std::string& data)> sender;
 		std::mutex mtx;
 		std::atomic_uint64_t seq = 0;
@@ -198,6 +211,7 @@ namespace ubot
 					rapidjson::GenericStringBuffer<rapidjson::UTF8<> > tempResult;
 					TWriter tempWriter(tempResult);
 					tempWriter.StartObject();
+					co_await handlerRunner.schedule();
 					co_await phandler->second(std::move(pParams->value), tempWriter);
 					tempWriter.EndObject();
 					co_return false;
@@ -209,6 +223,7 @@ namespace ubot
 					writer.String("2.0");
 					writer.Key("id");
 					oId->Accept(writer);
+					co_await handlerRunner.schedule();
 					co_await phandler->second(std::move(pParams->value), writer);
 					writer.EndObject();
 					co_return true;
@@ -231,6 +246,10 @@ namespace ubot
 					}
 					resultAwaiter = resultAwaiterKV->second;
 					pending.erase(resultAwaiterKV);
+				}
+				if (!resultAwaiter->can_run_on_message_thread())
+				{
+					co_await handlerRunner.schedule();
 				}
 				resultAwaiter->set_result(ParseRpcResult(value));
 				co_return false;
