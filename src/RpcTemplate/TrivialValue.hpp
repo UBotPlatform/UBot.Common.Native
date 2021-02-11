@@ -17,7 +17,17 @@ namespace ubot
 			return data;
 		}
 	};
-
+	template<>
+	struct TrivialValue<void>
+	{
+		TrivialValue()
+		{
+		}
+		void get() const noexcept
+		{
+			return;
+		}
+	};
 	template <typename T>
 	struct is_trivial_value : std::bool_constant<false>
 	{

@@ -4,6 +4,6 @@ namespace ubot
 {
 	struct StringArg
 	{
-		using NativeType = EncodingImpl::ConstStr;
+		using NativeType = Encoding::ConstStr;
 	};
 }

@@ -69,7 +69,7 @@ namespace ubot
 		TWriter* writer;
 	};
 
-	template<typename... TArgs, typename THandler, size_t... Indices>
+	template<typename TResponder /* Reserved */, typename... TArgs, typename THandler, size_t... Indices>
 	void SetNativeAsyncHandlerImpl(ubot::JsonRpc& rpc,
 		std::string_view name,
 		THandler handler,
@@ -107,12 +107,12 @@ namespace ubot
 			});
 	}
 
-	template<typename... TArgs, typename THandler>
+	template<typename TResponder, typename... TArgs, typename THandler>
 	void SetNativeAsyncHandler(ubot::JsonRpc& rpc,
 		std::string_view name,
 		THandler handler)
 	{
-		SetNativeAsyncHandlerImpl<TArgs...>(rpc, name, handler, std::index_sequence_for<TArgs...>{});
+		SetNativeAsyncHandlerImpl<TResponder, TArgs...>(rpc, name, handler, std::index_sequence_for<TArgs...>{});
 	}
 
 	template<typename TBuilder, std::enable_if_t<std::is_convertible_v<TBuilder, std::function<void(TWriter& writer)>>, int> = 0>
@@ -135,13 +135,14 @@ namespace ubot
 			{
 				writer.StartArray();
 				[[maybe_unused]] int dummy[] = {
+					0,
 					(ArgImpl<TArgs>::Write(writer, args), 0)...
 				};
 				writer.EndArray();
 			}, true));
 		if constexpr (std::is_void_v<TResult>)
 		{
-			return;
+			return TrivialValue<void>{};
 		}
 		else
 		{
@@ -161,6 +162,7 @@ namespace ubot
 			{
 				writer.StartArray();
 				[[maybe_unused]] int dummy[] = {
+					0,
 					(ArgImpl<TArgs>::Write(writer, args), 0)...
 				};
 				writer.EndArray();

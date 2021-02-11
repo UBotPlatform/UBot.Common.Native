@@ -47,7 +47,11 @@ target_sources(ubot-common PRIVATE
     "src/AsyncResponsorU8.cpp"
     "src/AsyncResponsorW.cpp"
     "src/AsyncResponsorCommon.cpp"
-    "src/unordered_string_map.hpp")
+    "src/unordered_string_map.hpp"
+    "src/RpcTemplate/RpcHelperMacroImpl.hpp"
+    "include/RpcTemplate/RpcHelperMacro.hpp"
+    "include/RpcTemplate/ApiDefiner.hpp"
+    "include/AppApiDefiner.hpp")
 if(WIN32)
     target_sources(ubot-common PRIVATE "src/Export.def")
 endif()
@@ -61,6 +65,9 @@ target_include_directories(ubot-common PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
 
 find_package(cppcoro CONFIG REQUIRED)
 target_link_libraries(ubot-common PRIVATE cppcoro)
+
+find_path(BOOST_PREPROCESSOR_INCLUDE_DIRS "boost/preprocessor.hpp")
+target_include_directories(ubot-common PUBLIC ${BOOST_PREPROCESSOR_INCLUDE_DIRS})
 
 find_path(IXWEBSOCKET_INCLUDE_DIR ixwebsocket/IXWebSocket.h)
 find_library(IXWEBSOCKET_LIBRARY ixwebsocket)
