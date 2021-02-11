@@ -1,12 +1,13 @@
 #pragma once
-#include "JsonRpc.h"
-#include "UNativeStrHelper.h"
+#include <RpcTemplate/Arg/FlattedStringArrayArg.hpp>
+#include "ArgImpl.hpp"
+#include "../../JsonRpc.h"
+#include "../../UNativeStrHelper.h"
 namespace ubot
 {
-	template<char Separator = '|'>
-	struct FlattedStringArrayArg
+	template<char Separator>
+	struct ArgImpl<FlattedStringArrayArg<Separator>>
 	{
-		using NativeType = EncodingImpl::ConstStr;
 		static void Write(TWriter& writer, EncodingImpl::ConstStr x)
 		{
 			auto data = EncodingImpl::TempFrom(x);

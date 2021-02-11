@@ -1,12 +1,14 @@
 #pragma once
-#include "TrivialValue.hpp"
-#include "JsonRpc.h"
-#include "../UNativeStrHelper.h"
+#include <RpcTemplate/Arg/JsonRawArg.hpp>
+#include "ArgImpl.hpp"
+#include "../TrivialValue.hpp"
+#include "../../JsonRpc.h"
+#include "../../UNativeStrHelper.h"
 namespace ubot
 {
-	struct JsonRawArg
+	template<>
+	struct ArgImpl<JsonRawArg>
 	{
-		using NativeType = Encoding::ConstStr;
 		static void Write(TWriter& writer, Encoding::ConstStr x)
 		{
 			EncodingImpl::TempFrom utf8(x);

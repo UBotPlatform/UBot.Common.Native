@@ -1,12 +1,13 @@
 #pragma once
-#include "TrivialValue.hpp"
-#include "JsonRpc.h"
+#include <RpcTemplate/Arg/EnumArg.hpp>
+#include "ArgImpl.hpp"
+#include "../TrivialValue.hpp"
+#include "../../JsonRpc.h"
 namespace ubot
 {
 	template<typename T>
-	struct EnumArg
+	struct ArgImpl<EnumArg<T>>
 	{
-		using NativeType = T;
 		static void Write(TWriter& writer, T x)
 		{
 			writer.Int(static_cast<int>(x));

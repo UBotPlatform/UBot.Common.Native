@@ -1,11 +1,13 @@
 #pragma once
-#include "JsonRpc.h"
-#include "UNativeStrHelper.h"
+#include <RpcTemplate/Arg/StringArg.hpp>
+#include "ArgImpl.hpp"
+#include "../../JsonRpc.h"
+#include "../../UNativeStrHelper.h"
 namespace ubot
 {
-	struct StringArg
+	template<>
+	struct ArgImpl<StringArg>
 	{
-		using NativeType = EncodingImpl::ConstStr;
 		static void Write(TWriter& writer, EncodingImpl::ConstStr x)
 		{
 			writer.String(EncodingImpl::TempFrom(x).get());

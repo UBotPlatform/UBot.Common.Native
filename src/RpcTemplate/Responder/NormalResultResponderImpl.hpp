@@ -1,12 +1,12 @@
 #pragma once
-#include "JsonRpc.h"
+#include <RpcTemplate/Responder/NormalResultResponder.hpp>
+#include "ResponderImpl.hpp"
+#include "../../JsonRpc.h"
 namespace ubot
 {
 	template<typename TArg>
-	struct NormalResultResponder
+	struct ResponderImpl<NormalResultResponder<TArg>>
 	{
-		using NativeType = typename TArg::NativeType;
-		using NativeTypeEx = void;
 		static void Respond(TWriter& writer, typename TArg::NativeType x)
 		{
 			JsonRpc::StartResult(writer);

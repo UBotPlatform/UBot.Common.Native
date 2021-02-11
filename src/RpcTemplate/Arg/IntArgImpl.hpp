@@ -1,11 +1,13 @@
 #pragma once
-#include "TrivialValue.hpp"
-#include "JsonRpc.h"
+#include <RpcTemplate/Arg/IntArg.hpp>
+#include "ArgImpl.hpp"
+#include "../TrivialValue.hpp"
+#include "../../JsonRpc.h"
 namespace ubot
 {
-	struct IntArg
+	template<>
+	struct ArgImpl<IntArg>
 	{
-		using NativeType = int;
 		static void Write(TWriter& writer, int x)
 		{
 			writer.Int(x);

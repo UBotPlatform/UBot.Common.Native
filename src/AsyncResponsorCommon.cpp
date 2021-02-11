@@ -1,5 +1,5 @@
 #include "AsyncResponsor.h"
-#include "RpcTemplate.hpp"
+#include "RpcTemplate/RpcTemplateImpl.hpp"
 using namespace ubot;
 void __stdcall ubotAsyncReturnNormalEventResult(void* async, EventResultType type)
 {
@@ -7,7 +7,7 @@ void __stdcall ubotAsyncReturnNormalEventResult(void* async, EventResultType typ
         JsonRpc::StartResult(writer);
         writer.StartObject();
         writer.Key("type");
-        EnumArg<EventResultType>::Write(writer, type);
+        ArgImpl<EnumArg<EventResultType>>::Write(writer, type);
         writer.EndObject();
         JsonRpc::EndResult(writer);
 	});

@@ -1,12 +1,13 @@
 ﻿#pragma once
-#include "../JsonRpc.h"
+#include <RpcTemplate/Responder/EventResponder.hpp>
+#include "ResponderImpl.hpp"
+#include "../../JsonRpc.h"
 #include "EventResultType.h"
 namespace ubot
 {
-    struct NormalEventRespond
+    template<>
+    struct ResponderImpl<NormalEventRespond>
     {
-        using NativeType = EventResultType;
-        using NativeTypeEx = void;
         static void Respond(TWriter& writer, EventResultType x)
         {
             JsonRpc::StartResult(writer);
@@ -18,10 +19,9 @@ namespace ubot
         }
     };
 
-    struct ReasonableEventRespond
+    template<>
+    struct ResponderImpl<ReasonableEventRespond>
     {
-        using NativeType = EventResultType;
-        using NativeTypeEx = void*;
         static void Respond(TWriter& writer, EventResultType x, void* reason)
         {
             JsonRpc::StartResult(writer);

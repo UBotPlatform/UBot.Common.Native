@@ -2,7 +2,7 @@
 #include "UBotClientHost.h"
 #include "AppHost.h"
 #include "UNativeStrHelper.h"
-#include "RpcTemplate.hpp"
+#include "RpcTemplate/RpcTemplateImpl.hpp"
 #include "UBotAppContext.h"
 using namespace ubot;
 

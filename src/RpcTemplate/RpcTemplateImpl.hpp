@@ -1,15 +1,15 @@
 #pragma once
 #include <cppcoro/sync_wait.hpp>
-#include "RpcTemplate/TrivialValue.hpp"
-#include "RpcTemplate/IntArg.hpp"
-#include "RpcTemplate/EnumArg.hpp"
-#include "RpcTemplate/JsonRawArg.hpp"
-#include "RpcTemplate/StringArg.hpp"
-#include "RpcTemplate/BoolArg.hpp"
-#include "RpcTemplate/FlattedStringArrayArg.hpp"
-#include "RpcTemplate/NormalResultResponder.hpp"
-#include "RpcTemplate/EventRespond.hpp"
-#include "spawn.hpp"
+#include "TrivialValue.hpp"
+#include "Arg/IntArgImpl.hpp"
+#include "Arg/EnumArgImpl.hpp"
+#include "Arg/JsonRawArgImpl.hpp"
+#include "Arg/StringArgImpl.hpp"
+#include "Arg/BoolArgImpl.hpp"
+#include "Arg/FlattedStringArrayArgImpl.hpp"
+#include "Responder/NormalResultResponderImpl.hpp"
+#include "Responder/EventResponderImpl.hpp"
+#include "../spawn.hpp"
 namespace ubot
 {
 	template<typename TResponder, typename... TArgs, typename THandler, size_t... Indices>
@@ -26,28 +26,28 @@ namespace ubot
 					static_assert(std::is_convertible_v<THandler, std::function<typename TResponder::NativeType(typename TArgs::NativeType...)>>, "invalid handler");
 					if constexpr (std::is_void_v<typename TResponder::NativeType>)
 					{
-						handler((TArgs::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())...);
-						TResponder::Respond(writer);
+						handler((ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())...);
+						ResponderImpl<TResponder>::Respond(writer);
 					}
 					else
 					{
-						auto result = handler((TArgs::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())...);
-						TResponder::Respond(writer, result);
+						auto result = handler((ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())...);
+						ResponderImpl<TResponder>::Respond(writer, result);
 					}
 				} 
 				else 
 				{
 					static_assert(std::is_convertible_v<THandler, std::function<typename TResponder::NativeType(typename TArgs::NativeType..., typename TResponder::NativeTypeEx)>>, "invalid handler");
-					auto resultEx = TResponder::MakeResultEx();
+					auto resultEx = ResponderImpl<TResponder>::MakeResultEx();
 					if constexpr (std::is_void_v<typename TResponder::NativeType>)
 					{
-						handler((TArgs::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())..., resultEx.get());
-						TResponder::Respond(writer, resultEx.get());
+						handler((ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())..., resultEx.get());
+						ResponderImpl<TResponder>::Respond(writer, resultEx.get());
 					}
 					else
 					{
-						auto result = handler((TArgs::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())..., resultEx.get());
-						TResponder::Respond(writer, result, resultEx.get());
+						auto result = handler((ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())..., resultEx.get());
+						ResponderImpl<TResponder>::Respond(writer, result, resultEx.get());
 					}
 				}
 				co_return;
@@ -80,7 +80,7 @@ namespace ubot
 			{
 				struct awaiter
 				{
-					using TStoredArgs = std::tuple<decltype(TArgs::TempRead(nullptr))...>;
+					using TStoredArgs = std::tuple<decltype(ArgImpl<TArgs>::TempRead(nullptr))...>;
 					AsyncReturnInfo info;
 					THandler storedHandler;
 					TStoredArgs storedArgs;
@@ -103,7 +103,7 @@ namespace ubot
 					}
 				};
 				size_t nArgs = params.IsArray() ? params.Size() : 0;
-				co_await awaiter(&writer, handler, std::make_tuple(TArgs::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr)...));
+				co_await awaiter(&writer, handler, std::make_tuple(ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr)...));
 			});
 	}
 
@@ -135,7 +135,7 @@ namespace ubot
 			{
 				writer.StartArray();
 				[[maybe_unused]] int dummy[] = {
-					(TArgs::Write(writer, args), 0)...
+					(ArgImpl<TArgs>::Write(writer, args), 0)...
 				};
 				writer.EndArray();
 			}, true));
@@ -145,7 +145,7 @@ namespace ubot
 		}
 		else
 		{
-			return TResult::PempRead(raw.Error.has_value() ? nullptr : &raw.Result);
+			return ArgImpl<TResult>::PempRead(raw.Error.has_value() ? nullptr : &raw.Result);
 		}
 	}
 
@@ -161,7 +161,7 @@ namespace ubot
 			{
 				writer.StartArray();
 				[[maybe_unused]] int dummy[] = {
-					(TArgs::Write(writer, args), 0)...
+					(ArgImpl<TArgs>::Write(writer, args), 0)...
 				};
 				writer.EndArray();
 			});
@@ -173,7 +173,7 @@ namespace ubot
 		else
 		{
 			static_assert(std::is_convertible_v<THandler, std::function<void(typename TResult::NativeType result)>>, "invalid handler");
-			auto nativeResult = TResult::TempRead(raw.Error.has_value() ? nullptr : &raw.Result);
+			auto nativeResult = ArgImpl<TResult>::TempRead(raw.Error.has_value() ? nullptr : &raw.Result);
 			handle(nativeResult.get());
 		}
 	}
