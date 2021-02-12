@@ -7,17 +7,33 @@
 #include "Arg/StringArgImpl.hpp"
 #include "Arg/BoolArgImpl.hpp"
 #include "Arg/FlattedStringArrayArgImpl.hpp"
+#include "Arg/VoidArgImpl.hpp"
+#include "Arg/NormalEventResultArgImpl.hpp"
 #include "Responder/NormalResultResponderImpl.hpp"
-#include "Responder/EventResponderImpl.hpp"
+#include "Responder/ReasonableEventResponderImpl.hpp"
 #include "../spawn.hpp"
 namespace ubot
 {
-	template<typename TResponder, typename... TArgs, typename THandler, size_t... Indices>
+	template <typename T>
+	struct select_true_responder
+	{
+	private:
+		template <typename T0, typename = decltype(ResponderImpl<T0>::Respond)> static T0 __test(int) {}
+		template <typename T0, typename = decltype(ArgImpl<T0>::Write)> static NormalResultResponder<T0> __test(...) {}
+	public:
+		using type = decltype(__test<T>(0));
+	};
+	template <typename T>
+	using select_true_responder_t = typename select_true_responder<T>::type;
+
+	template<typename TResult, typename... TArgs, typename THandler, size_t... Indices>
 	void SetNativeHandlerImpl(ubot::JsonRpc& rpc, 
 		std::string_view name, 
 		THandler handler,
 		std::index_sequence<Indices...>)
 	{
+		using TResponder = select_true_responder_t<TResult>;
+		using TResponderImpl = ResponderImpl<TResponder>;
 		rpc.SetHandler(name, [handler](rapidjson::Value&& params, TWriter& writer) -> cppcoro::task<>
 			{
 				size_t nArgs = params.IsArray() ? params.Size() : 0;
@@ -27,39 +43,39 @@ namespace ubot
 					if constexpr (std::is_void_v<typename TResponder::NativeType>)
 					{
 						handler((ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())...);
-						ResponderImpl<TResponder>::Respond(writer);
+						TResponderImpl::Respond(writer);
 					}
 					else
 					{
 						auto result = handler((ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())...);
-						ResponderImpl<TResponder>::Respond(writer, result);
+						TResponderImpl::Respond(writer, result);
 					}
 				} 
 				else 
 				{
 					static_assert(std::is_convertible_v<THandler, std::function<typename TResponder::NativeType(typename TArgs::NativeType..., typename TResponder::NativeTypeEx)>>, "invalid handler");
-					auto resultEx = ResponderImpl<TResponder>::MakeResultEx();
+					auto resultEx = TResponderImpl::MakeResultEx();
 					if constexpr (std::is_void_v<typename TResponder::NativeType>)
 					{
 						handler((ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())..., resultEx.get());
-						ResponderImpl<TResponder>::Respond(writer, resultEx.get());
+						TResponderImpl::Respond(writer, resultEx.get());
 					}
 					else
 					{
 						auto result = handler((ArgImpl<TArgs>::TempRead(Indices < nArgs ? &(params.GetArray()[Indices]) : nullptr).get())..., resultEx.get());
-						ResponderImpl<TResponder>::Respond(writer, result, resultEx.get());
+						TResponderImpl::Respond(writer, result, resultEx.get());
 					}
 				}
 				co_return;
 			});
 	}
 
-	template<typename TResponder, typename... TArgs, typename THandler>
+	template<typename TResult, typename... TArgs, typename THandler>
 	void SetNativeHandler(ubot::JsonRpc& rpc,
 		std::string_view name,
 		THandler handler)
 	{
-		SetNativeHandlerImpl<TResponder, TArgs...>(rpc, name, handler, std::index_sequence_for<TArgs...>{});
+		SetNativeHandlerImpl<TResult, TArgs...>(rpc, name, handler, std::index_sequence_for<TArgs...>{});
 	}
 
 
@@ -69,7 +85,7 @@ namespace ubot
 		TWriter* writer;
 	};
 
-	template<typename TResponder /* Reserved */, typename... TArgs, typename THandler, size_t... Indices>
+	template<typename TResult /* Reserved */, typename... TArgs, typename THandler, size_t... Indices>
 	void SetNativeAsyncHandlerImpl(ubot::JsonRpc& rpc,
 		std::string_view name,
 		THandler handler,
@@ -107,12 +123,12 @@ namespace ubot
 			});
 	}
 
-	template<typename TResponder, typename... TArgs, typename THandler>
+	template<typename TResult, typename... TArgs, typename THandler>
 	void SetNativeAsyncHandler(ubot::JsonRpc& rpc,
 		std::string_view name,
 		THandler handler)
 	{
-		SetNativeAsyncHandlerImpl<TResponder, TArgs...>(rpc, name, handler, std::index_sequence_for<TArgs...>{});
+		SetNativeAsyncHandlerImpl<TResult, TArgs...>(rpc, name, handler, std::index_sequence_for<TArgs...>{});
 	}
 
 	template<typename TBuilder, std::enable_if_t<std::is_convertible_v<TBuilder, std::function<void(TWriter& writer)>>, int> = 0>
@@ -140,14 +156,7 @@ namespace ubot
 				};
 				writer.EndArray();
 			}, true));
-		if constexpr (std::is_void_v<TResult>)
-		{
-			return TrivialValue<void>{};
-		}
-		else
-		{
-			return ArgImpl<TResult>::PempRead(raw.Error.has_value() ? nullptr : &raw.Result);
-		}
+		return ArgImpl<TResult>::PempRead(raw.Error.has_value() ? nullptr : &raw.Result);
 	}
 
 	template<typename TResult, 
@@ -167,7 +176,7 @@ namespace ubot
 				};
 				writer.EndArray();
 			});
-		if constexpr (std::is_void_v<TResult>)
+		if constexpr (std::is_void_v<TResult::NativeType>)
 		{
 			static_assert(std::is_convertible_v<THandler, std::function<void()>>, "invalid handler");
 			handle();

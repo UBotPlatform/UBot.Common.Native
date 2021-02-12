@@ -16,14 +16,14 @@
         )
 
 #define UBotPP_DefineApiCallSync(funcName, TResult, name, ...) \
-    ubot::get_native_type_t<TResult> __stdcall funcName UBotPP_Params((void* ctx), , UBotPP_ParamTupleToNativeParam, __VA_ARGS__)
+    typename TResult::NativeType __stdcall funcName UBotPP_Params((void* ctx), , UBotPP_ParamTupleToNativeParam, __VA_ARGS__)
 
 #define UBotPP_DefineApiCallAsync(funcName, TResult, name, ...) \
     void __stdcall funcName UBotPP_Params((void* ctx) (void* user), (ubot::async_handler_t<TResult> handler), UBotPP_ParamTupleToNativeParam, __VA_ARGS__)
 
 #define UBotPP_SyncHandlerType(TResult, ...)\
     std::conditional_t<\
-        std::is_void_v<TResult::NativeTypeEx>,\
+        std::is_void_v<ubot::get_native_type_ex_t<TResult>>,\
         typename TResult::NativeType(__stdcall*) UBotPP_Params((void* ctx) (void* user), , UBotPP_ParamTupleToNativeParam, __VA_ARGS__),\
         typename TResult::NativeType(__stdcall*) UBotPP_Params((void* ctx) (void* user), (ubot::void_to_nullptr_t<ubot::get_native_type_ex_t<TResult>> __respond), UBotPP_ParamTupleToNativeParam, __VA_ARGS__)\
     >

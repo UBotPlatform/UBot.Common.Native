@@ -5,8 +5,10 @@
 #include "Arg/StringArg.hpp"
 #include "Arg/BoolArg.hpp"
 #include "Arg/FlattedStringArrayArg.hpp"
+#include "Arg/VoidArg.hpp"
+#include "Arg/NormalEventResultArg.hpp"
 #include "Responder/NormalResultResponder.hpp"
-#include "Responder/EventResponder.hpp"
+#include "Responder/ReasonableEventResponder.hpp"
 namespace ubot
 {
     template <typename T>
@@ -22,28 +24,16 @@ namespace ubot
     template <typename T>
     using void_to_nullptr_t = typename void_to_nullptr<T>::type;
 
-    template <typename T>
-    struct get_native_type
-    {
-        using type = typename T::NativeType;
-    };
-    template <>
-    struct get_native_type<void>
-    {
-        using type = void;
-    };
-    template <typename T>
-    using get_native_type_t = typename get_native_type<T>::type;
+
 
     template <typename T>
     struct get_native_type_ex
     {
-        using type = typename T::NativeTypeEx;
-    };
-    template <>
-    struct get_native_type_ex<void>
-    {
-        using type = void;
+    private:
+        template <typename T0> static typename T0::NativeTypeEx __test(int) {}
+        template <typename T0> static void __test(...) {}
+    public:
+        using type = decltype(__test<T>(0));
     };
     template <typename T>
     using get_native_type_ex_t = typename get_native_type_ex<T>::type;
@@ -51,10 +41,10 @@ namespace ubot
     template <typename TResult>
     struct async_handler_type_impl
     {
-        using type = void(__stdcall*)(void* ctx, void* user, get_native_type_t<TResult> result);
+        using type = void(__stdcall*)(void* ctx, void* user, typename TResult::NativeType result);
     };
     template<>
-    struct async_handler_type_impl<void>
+    struct async_handler_type_impl<VoidArg>
     {
         using type = void(__stdcall*)(void* ctx, void* user);
     };

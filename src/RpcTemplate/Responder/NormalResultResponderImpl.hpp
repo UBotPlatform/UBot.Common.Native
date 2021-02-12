@@ -10,7 +10,7 @@ namespace ubot
 		static void Respond(TWriter& writer, typename TArg::NativeType x)
 		{
 			JsonRpc::StartResult(writer);
-			TArg::Write(writer, x);
+			ArgImpl<TArg>::Write(writer, x);
 			JsonRpc::EndResult(writer);
 		}
 	};

@@ -2,13 +2,7 @@
 #include "../../EventResultType.h"
 namespace ubot
 {
-    struct NormalEventRespond
-    {
-        using NativeType = EventResultType;
-        using NativeTypeEx = void;
-    };
-
-    struct ReasonableEventRespond
+    struct ReasonableEventResponder
     {
         using NativeType = EventResultType;
         using NativeTypeEx = void*;

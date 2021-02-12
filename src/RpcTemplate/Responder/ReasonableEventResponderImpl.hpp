@@ -1,26 +1,12 @@
 ﻿#pragma once
-#include <RpcTemplate/Responder/EventResponder.hpp>
+#include <RpcTemplate/Responder/ReasonableEventResponder.hpp>
 #include "ResponderImpl.hpp"
 #include "../../JsonRpc.h"
 #include "EventResultType.h"
 namespace ubot
 {
     template<>
-    struct ResponderImpl<NormalEventRespond>
-    {
-        static void Respond(TWriter& writer, EventResultType x)
-        {
-            JsonRpc::StartResult(writer);
-            writer.StartObject();
-            writer.Key("type");
-            writer.Int(static_cast<int>(x));
-            writer.EndObject();
-            JsonRpc::EndResult(writer);
-        }
-    };
-
-    template<>
-    struct ResponderImpl<ReasonableEventRespond>
+    struct ResponderImpl<ReasonableEventResponder>
     {
         static void Respond(TWriter& writer, EventResultType x, void* reason)
         {
