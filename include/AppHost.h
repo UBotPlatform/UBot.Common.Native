@@ -29,4 +29,6 @@ extern "C"
 {
 	void* __stdcall ubotAppNew();
 	void __stdcall ubotAppDelete(void* ctx);
+	void __stdcall UNativeStr_WithSuffix(ubotAppHost)(void* ctx, ubot::Encoding::ConstStr op, ubot::Encoding::ConstStr urlStr, ubot::Encoding::ConstStr id);
 }
+inline auto& ubotAppHost = UNativeStr_WithSuffix(ubotAppHost);
